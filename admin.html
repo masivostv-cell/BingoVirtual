@@ -188,12 +188,14 @@
         
         <div class="header-bingo">
             <div id="media-left" class="media-zone"></div>
+
             <div class="game-center-panel">
                 <div style="text-align:center;">
                     <strong style="font-size: 2vh; color: #495057;">FIGURA</strong>
                     <div id="figura-display" style="display:grid; grid-template-columns:repeat(5,1fr); gap:1px; width:80px; background:#333; padding:2px; margin: 5px auto;"></div>
                     <small id="nombre-figura" style="font-weight:bold; color: #6c757d;">---</small>
                 </div>
+
                 <div style="display:flex; flex-direction:column; align-items:center;">
                     <div class="balota-grande">
                         <span id="main-letra" style="font-size: 2.5vh; font-weight: bold;">-</span>
@@ -203,17 +205,15 @@
                         <div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div>
                     </div>
                 </div>
+
                 <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div style="background: #23a9a5; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                    <div style="background: #004080; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
                         SALA: <span id="display-codigo-sala" style="color:#ffc107; letter-spacing: 2px;">---</span>
                     </div>
                     <div id="contador-balotas" style="font-size:8vh; font-weight:900; color:#d32f2f; line-height: 0.9;">0/75</div>
                 </div>
-            </div>
-            <div id="media-right" class="media-zone"></div>
-        </div>
-
-        <div id="tablero-maestro"></div>
+            </div> <div id="media-right" class="media-zone"></div>
+        </div> <div id="tablero-maestro"></div>
     </div>
 
     <div class="admin-zone">
@@ -317,6 +317,7 @@
                     📢 <b>PIN DE LA SALA:</b><br>
                     <span id="lbl-mi-sala" style="color:#ffc107; font-weight:900; font-size: 32px; letter-spacing: 5px;">---</span>
                 </div>
+            </div>
                 
                 <div style="display: none;">
                     ⏳ <b>LICENCIA RESTANTE:</b><br>
@@ -817,18 +818,15 @@
                 hash = ((hash << 5) - hash) + nombre.charCodeAt(i);
                 hash |= 0; 
             }
-            return (Math.abs(hash) % 900000) + 100000; // Garantiza siempre 6 dígitos (Ej: 482915)
+            return (Math.abs(hash) % 900000) + 100000; 
         };
 
-        // Guardamos el código globalmente
+        // DEFINIMOS EL PIN ÚNICO GLOBAL
         window.MI_CODIGO_SALA = generarCodigoUnico(usuarioActivo.toUpperCase()).toString();
         
-        // Lo mostramos en las dos pantallas que creamos
-        const lblMiSala = document.getElementById('lbl-mi-sala');
-        if(lblMiSala) lblMiSala.innerText = window.MI_CODIGO_SALA;
-        
-        const displaySala = document.getElementById('display-codigo-sala');
-        if(displaySala) displaySala.innerText = window.MI_CODIGO_SALA;
+        // Lo mostramos en las pantallas
+        if(document.getElementById('lbl-mi-sala')) document.getElementById('lbl-mi-sala').innerText = window.MI_CODIGO_SALA;
+        if(document.getElementById('display-codigo-sala')) document.getElementById('display-codigo-sala').innerText = window.MI_CODIGO_SALA;
 
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {
@@ -1081,53 +1079,53 @@
         window.seleccionarSerial = async (idx) => { 
             if(!checkSecurity()) return; 
             
-            // 1. Guardar localmente (como ya lo hacías)
             dbLocal.serialActivoIndex = idx; 
             guardarDatos(); 
             actualizarListaSeriales(); 
 
-            // 2. 🔥 NUEVO: Subir los cartones a Firebase
             const serialActivo = dbLocal.serialesExtra[idx];
             if(!serialActivo || !serialActivo.lista) return;
 
-            const btn = event.target; // Capturamos el botón que presionaste
-            const textoOriginal = btn.innerText;
-            btn.innerText = "SUBIENDO...";
-            btn.style.backgroundColor = "#ffc107";
-            btn.style.color = "black";
+            // Buscamos el botón específico que se presionó
+            const btn = document.querySelector(`button[onclick="seleccionarSerial(${idx})"]`);
+            if(btn) {
+                btn.innerText = "SUBIENDO...";
+                btn.style.backgroundColor = "#ffc107";
+                btn.style.color = "black";
+            }
 
             try {
                 if (window.db && window.firebaseTools) {
+                    // Usamos el PIN de 6 dígitos definido globalmente
                     const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
                     
-                    // Convertimos la lista de cartones en un objeto para que Firebase lo lea fácil
-                    // Ejemplo: { "1": [numeros...], "2": [numeros...], "3": [numeros...] }
                     let cartonesParaFirebase = {};
                     serialActivo.lista.forEach(c => {
                         cartonesParaFirebase[c.carton.toString()] = c.numeros;
                     });
 
-                    // Actualizamos la sala con los nuevos cartones oficiales
-                    await window.firebaseTools.updateDoc(salaRef, {
+                    // 🔥 USAMOS setDoc PARA CREAR O ACTUALIZAR SIN ERRORES 🔥
+                    await window.firebaseTools.setDoc(salaRef, {
                         cartonesOficiales: cartonesParaFirebase,
-                        nombreSerial: serialActivo.nombre
-                    });
+                        nombreSerial: serialActivo.nombre,
+                        pinSala: window.MI_CODIGO_SALA,
+                        estado: "activo"
+                    }, { merge: true });
 
-                    btn.innerText = "¡SUBIDO!";
-                    btn.style.backgroundColor = "#28a745";
-                    btn.style.color = "white";
-                    
-                    // Regresar el botón a la normalidad después de 2 segundos
-                    setTimeout(() => {
-                        btn.innerText = "USAR";
-                        btn.style.backgroundColor = "#004080";
-                    }, 2000);
+                    if(btn) {
+                        btn.innerText = "¡SUBIDO!";
+                        btn.style.backgroundColor = "#28a745";
+                        btn.style.color = "white";
+                        setTimeout(() => {
+                            btn.innerText = "USAR";
+                            btn.style.backgroundColor = "#004080";
+                        }, 2000);
+                    }
                 }
             } catch (error) {
-                console.error("Error subiendo el serial a Firebase:", error);
-                alert("Hubo un error al subir los cartones a la nube.");
-                btn.innerText = "ERROR";
-                btn.style.backgroundColor = "#dc3545";
+                console.error("Error subiendo serial:", error);
+                alert("Error al conectar con la nube. Verifica tu internet.");
+                if(btn) btn.innerText = "ERROR";
             }
         };
         window.eliminarSerial = (idx) => { if(!checkSecurity()) return; if(confirm("¿Borrar?")){ dbLocal.serialesExtra.splice(idx,1); dbLocal.serialActivoIndex=-1; guardarDatos(); actualizarListaSeriales(); } };
