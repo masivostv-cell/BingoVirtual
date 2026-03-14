@@ -401,11 +401,14 @@
   window.firebaseTools = { doc, setDoc, updateDoc };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
-  // 🔥 RADAR DE BINGOS CANTADOS 🔥
-  window.ultimoBingoVisto = Date.now(); // Guardamos la hora de inicio para ignorar bingos de juegos pasados
+  // 🔥 // 🔥 RADAR DE BINGOS CANTADOS (PIN DE 6 CIFRAS) 🔥
+  window.ultimoBingoVisto = Date.now(); 
 
-  // Generamos el PIN numérico de 6 dígitos para el radar
-  const generarCodigoUnicoRadar = (nombre) => {
+  // Obtenemos el usuario para calcular el PIN de la sala
+  const usuarioParaRadar = localStorage.getItem('bingo_user') || "DEFAULT";
+  
+  // Función para generar el PIN (exactamente igual a la de iniciarAppBingo)
+  const obtenerPINRadar = (nombre) => {
       let hash = 0;
       for (let i = 0; i < nombre.length; i++) {
           hash = ((hash << 5) - hash) + nombre.charCodeAt(i);
@@ -414,11 +417,11 @@
       return ((Math.abs(hash) % 900000) + 100000).toString();
   };
 
-  const nombreUsuarioActivo = localStorage.getItem('bingo_user') || "DEFAULT";
-  const salaDinamica = generarCodigoUnicoRadar(nombreUsuarioActivo.toUpperCase());
-  const salaRef = doc(window.db, "salas", salaDinamica);
-  
-  onSnapshot(salaRef, (documento) => {
+  const salaPINRadar = obtenerPINRadar(usuarioParaRadar.toUpperCase());
+  const salaRefRadar = doc(window.db, "salas", salaPINRadar);
+
+  // Escuchamos la sala en tiempo real
+  onSnapshot(salaRefRadar, (documento) => {
       if(documento.exists()) {
           const datos = documento.data();
           
@@ -426,40 +429,44 @@
           if(datos.alertaBingo && datos.alertaBingo.timestamp > window.ultimoBingoVisto) {
               window.ultimoBingoVisto = datos.alertaBingo.timestamp;
               
-              // Disparamos una alerta gigante en la pantalla del administrador
+              // Disparamos la alerta en tu pantalla de administrador
               alert(`🚨 ¡ATENCIÓN: BINGO CANTADO! 🚨\n\nEl jugador "${datos.alertaBingo.nombre.toUpperCase()}" acaba de cantar BINGO con el CARTÓN #${datos.alertaBingo.carton}.\n\nRevisa el cartón #${datos.alertaBingo.carton} en tu verificador.`);
           }
       }
   });
 
-  // 🔥 FUNCIÓN PARA ANUNCIAR AL GANADOR A TODA LA SALA 🔥
-  window.anunciarGanadorOficial = async () => {
-      let n = document.getElementById('num-revisar').value;
+ 
+     // 🔥 FUNCIÓN PARA ANUNCIAR AL GANADOR (ESTA ES LA QUE USA EL BOTÓN 2) 🔥
+  window.anunciarGanadorOficial = async (numeroDesdeCarton) => {
+      // Si viene de la ventana emergente usa ese número, si no, lo lee del cuadro de texto
+      let n = numeroDesdeCarton || document.getElementById('num-revisar').value;
+      
       if(!n) {
-          alert("Primero escribe el número de cartón ganador en la casilla de REVISAR N°");
+          alert("Primero escribe el número de cartón ganador en la casilla.");
           return;
       }
       
-      let nombreGanador = prompt(`¿Cuál es el nombre del ganador del Cartón #${n}? (Se mostrará en las pantallas de todos)`);
+      // Pedimos el nombre (Esto es lo que el botón 2 hace y ahora el cartón también)
+      let nombreGanador = prompt(`🏆 GANADOR DEL CARTÓN #${n}\n\nEscribe el nombre del ganador:`);
       if(!nombreGanador) return;
 
-      if(!confirm(`¿Estás seguro de anunciar a ${nombreGanador.toUpperCase()} (Cartón #${n}) como el ganador oficial?`)) return;
+      if(!confirm(`¿Confirmar a ${nombreGanador.toUpperCase()} como ganador oficial?`)) return;
 
       try {
           if (window.db && window.firebaseTools) {
               const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
-              await window.firebaseTools.updateDoc(salaRef, {
+              await window.firebaseTools.setDoc(salaRef, {
                   ganadorConfirmado: {
                       nombre: nombreGanador.toUpperCase(),
                       carton: n,
                       timestamp: Date.now()
                   }
-              });
-              alert("¡Anuncio de victoria enviado a todos los jugadores!");
+              }, { merge: true });
+              alert("¡Anuncio enviado a todos los jugadores!");
           }
       } catch(e) {
-          console.error("Error al anunciar:", e);
-          alert("Hubo un error al conectar con Firebase.");
+          console.error("Error Firebase:", e);
+          alert("Error de conexión.");
       }
   };
 </script>
@@ -821,12 +828,14 @@
             return (Math.abs(hash) % 900000) + 100000; 
         };
 
-        // DEFINIMOS EL PIN ÚNICO GLOBAL
+        // ESTABLECER EL PIN ÚNICO (Y NO TOCARLO MÁS)
         window.MI_CODIGO_SALA = generarCodigoUnico(usuarioActivo.toUpperCase()).toString();
         
-        // Lo mostramos en las pantallas
+        // Mostrar el PIN en las pantallas del administrador
         if(document.getElementById('lbl-mi-sala')) document.getElementById('lbl-mi-sala').innerText = window.MI_CODIGO_SALA;
         if(document.getElementById('display-codigo-sala')) document.getElementById('display-codigo-sala').innerText = window.MI_CODIGO_SALA;
+
+        // --- ELIMINÉ LAS LÍNEAS QUE DECÍAN "SALA-" + NOMBRE ---
 
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {
@@ -1322,24 +1331,49 @@
             let n = parseInt(document.getElementById('num-revisar').value);
             let c = cartonesActuales.find(x => x.carton == n);
             if(!c) return alert("No existe en el serial activo.");
-            const winR = window.open("", "R", "width=520,height=720");
-            winR.document.write(`<html><head><style>body{background:#121212;color:white;text-align:center;font-family:Arial;}.c-base{width:480px;background:#002b5c;padding:15px;margin:auto;}.g-main{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;background:#000;border:5px solid #000;}.c-bingo{background:#004080;color:white;height:80px;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:900;}.c-num{background:white;color:black;height:85px;display:flex;align-items:center;justify-content:center;font-size:45px;font-weight:900;}.marked{background:#28a745 !important;}.figura{border:6px solid #ffeb3b !important;box-sizing:border-box;}</style></head><body><div class="c-base"><div class="g-main"><div class="c-bingo">B</div><div class="c-bingo">I</div><div class="c-bingo">N</div><div class="c-bingo">G</div><div class="c-bingo">O</div>`);
+
+            // Ventana más pequeña solo para ver el cartón
+            const winR = window.open("", "R", "width=440,height=600");
+            
+            let contenidoHTML = `
+                <html>
+                <head>
+                    <style>
+                        body{background:#121212;color:white;text-align:center;font-family:Arial;padding:10px;margin:0;overflow-x:hidden;}
+                        .c-base{width:380px;background:#002b5c;padding:12px;margin:auto;border-radius:10px;border: 1px solid #333;}
+                        .g-main{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:#000;border:3px solid #000;}
+                        .c-bingo{background:#004080;color:white;height:50px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;}
+                        .c-num{background:white;color:black;height:60px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;}
+                        .marked{background:#28a745 !important; color:white;}
+                        .figura{border:4px solid #ffeb3b !important;box-sizing:border-box;}
+                        img { width: 75%; height: 75%; object-fit: contain; }
+                        h2 { font-size: 22px; margin: 15px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="c-base">
+                        <div class="g-main">
+                            <div class="c-bingo">B</div><div class="c-bingo">I</div><div class="c-bingo">N</div><div class="c-bingo">G</div><div class="c-bingo">O</div>
+            `;
+
             mapeoCarton.forEach((idx, i) => {
                 let num = c.numeros[idx];
                 let isM = dbLocal.juego.includes(num) || num === 0;
                 let isF = dbLocal.config.figura[i];
-                let displayContent = num;
-                
-                if(num === 0) {
-                    if(dbLocal.centerLogoBase64) {
-                        displayContent = `<img src="${dbLocal.centerLogoBase64}" style="width:80%; height:80%; object-fit:contain;">`;
-                    } else {
-                        displayContent = "X";
-                    }
-                }
-                winR.document.write(`<div class="c-num ${isM?'marked':''} ${isF&&!isM?'figura':''}">${displayContent}</div>`);
+                let displayContent = (num === 0) ? (dbLocal.centerLogoBase64 ? '<img src="' + dbLocal.centerLogoBase64 + '">' : 'X') : num;
+                contenidoHTML += '<div class="c-num ' + (isM ? 'marked' : '') + ' ' + (isF && !isM ? 'figura' : '') + '">' + displayContent + '</div>';
             });
-            winR.document.write(`</div><h2>CARTÓN #${n}</h2></div></body></html>`);
+
+            contenidoHTML += `
+                        </div>
+                        <h2>CARTÓN #${n}</h2>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            winR.document.write(contenidoHTML);
+            winR.document.close();
         };
 
         window.manualCheckById = (n) => {
@@ -1364,7 +1398,7 @@
             if (wins.length > 0 && wins.length !== lastWinCount) {
                 if (winRef && !winRef.closed) winRef.close();
                 winRef = window.open("", "W", "width=350,height=500");
-                winRef.document.write(`<html><head><style>body{background:#1a1a1a;color:white;text-align:center;font-family:Arial;}.btn{background:#6f42c1;color:white;padding:15px;margin:10px;border:none;border-radius:8px;width:90%;font-weight:bold;cursor:pointer;}</style></head><body><h2>🏆 GANADORES</h2><div id="l"></div><script>function rev(n){window.opener.manualCheckById(n);}<\/script></body></html>`);
+                winRef.document.write('<html><head><style>body{background:#1a1a1a;color:white;text-align:center;font-family:Arial;}.btn{background:#6f42c1;color:white;padding:15px;margin:10px;border:none;border-radius:8px;width:90%;font-weight:bold;cursor:pointer;}</style></head><body><h2>🏆 GANADORES</h2><div id="l"></div><script>function rev(n){window.opener.manualCheckById(n);}<\/script></body></html>');
                 wins.forEach(n => { let b = winRef.document.createElement('button'); b.className="btn"; b.innerText="CARTÓN #"+n; b.onclick = () => winRef.rev(n); winRef.document.getElementById('l').appendChild(b); });
                 lastWinCount = wins.length;
             } else if(wins.length === 0) lastWinCount = 0;
@@ -1387,12 +1421,10 @@
         window.toggleFullScreen = () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
-                    alert(`Error al intentar pantalla completa: ${err.message}`);
+                    alert("Error al intentar pantalla completa: " + err.message);
                 });
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
             }
         };
 
