@@ -1153,28 +1153,45 @@ window.copiarSecuenciaJugada = () => {
             // Buscamos el botón específico que se presionó
             const btn = document.querySelector(`button[onclick="seleccionarSerial(${idx})"]`);
             if(btn) {
-                btn.innerText = "SUBIENDO...";
+                btn.innerText = "PREPARANDO...";
                 btn.style.backgroundColor = "#ffc107";
                 btn.style.color = "black";
             }
 
             try {
                 if (window.db && window.firebaseTools) {
-                    // Usamos el PIN de 6 dígitos definido globalmente
                     const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
                     
-                    let cartonesParaFirebase = {};
-                    serialActivo.lista.forEach(c => {
-                        cartonesParaFirebase[c.carton.toString()] = c.numeros;
-                    });
-
-                    // 🔥 USAMOS setDoc PARA CREAR O ACTUALIZAR SIN ERRORES 🔥
+                    // 1. Limpiamos los cartones viejos de la nube para no mezclar juegos
                     await window.firebaseTools.setDoc(salaRef, {
-                        cartonesOficiales: cartonesParaFirebase,
+                        cartonesOficiales: {}, 
                         nombreSerial: serialActivo.nombre,
                         pinSala: window.MI_CODIGO_SALA,
                         estado: "activo"
                     }, { merge: true });
+
+                    // 2. LÓGICA DE SUBIDA "POCO A POCO" (Lotes de 500 cartones)
+                    const totalCartones = serialActivo.lista.length;
+                    const tamanoLote = 500;
+
+                    for (let i = 0; i < totalCartones; i += tamanoLote) {
+                        const lote = serialActivo.lista.slice(i, i + tamanoLote);
+                        let cartonesParaFirebase = {};
+
+                        // Empaquetamos solo los 500 de este turno
+                        lote.forEach(c => {
+                            cartonesParaFirebase[`cartonesOficiales.${c.carton}`] = c.numeros;
+                        });
+
+                        // Actualizamos el texto del botón para ver el progreso en vivo
+                        if(btn) btn.innerText = `SUBIENDO ${Math.min(i + tamanoLote, totalCartones)}/${totalCartones}...`;
+
+                        // Subimos el lote a Firebase
+                        await window.firebaseTools.updateDoc(salaRef, cartonesParaFirebase);
+
+                        // Pausa de medio segundo (500ms) para dejar respirar a Firebase
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
 
                     if(btn) {
                         btn.innerText = "¡SUBIDO!";
@@ -1188,8 +1205,11 @@ window.copiarSecuenciaJugada = () => {
                 }
             } catch (error) {
                 console.error("Error subiendo serial:", error);
-                alert("Error al conectar con la nube. Verifica tu internet.");
-                if(btn) btn.innerText = "ERROR";
+                alert("Error al conectar. Firebase rechazó el lote: " + error.message);
+                if(btn) {
+                    btn.innerText = "ERROR";
+                    btn.style.backgroundColor = "#dc3545";
+                }
             }
         };
         window.eliminarSerial = (idx) => { if(!checkSecurity()) return; if(confirm("¿Borrar?")){ dbLocal.serialesExtra.splice(idx,1); dbLocal.serialActivoIndex=-1; guardarDatos(); actualizarListaSeriales(); } };
