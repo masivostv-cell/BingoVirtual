@@ -1095,27 +1095,32 @@
             const serialActivo = dbLocal.serialesExtra[idx];
             if(!serialActivo || !serialActivo.lista) return;
 
-            // Buscamos el botón específico que se presionó
             const btn = document.querySelector(`button[onclick="seleccionarSerial(${idx})"]`);
             if(btn) {
-                btn.innerText = "SUBIENDO...";
+                btn.innerText = "EMPAQUETANDO...";
                 btn.style.backgroundColor = "#ffc107";
                 btn.style.color = "black";
             }
 
             try {
                 if (window.db && window.firebaseTools) {
-                    // Usamos el PIN de 6 dígitos definido globalmente
                     const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
                     
-                    let cartonesParaFirebase = {};
+                    // 1. Agrupamos todos los cartones
+                    let cartonesCompactos = {};
                     serialActivo.lista.forEach(c => {
-                        cartonesParaFirebase[c.carton.toString()] = c.numeros;
+                        cartonesCompactos[c.carton.toString()] = c.numeros;
                     });
+                    
+                    // 2. EL TRUCO MAGICO: Convertimos la lista inmensa en un solo texto.
+                    // Esto pesa poquísimo y burla el límite de 40,000 índices de Firebase.
+                    const paqueteTexto = JSON.stringify(cartonesCompactos);
 
-                    // 🔥 USAMOS setDoc PARA CREAR O ACTUALIZAR SIN ERRORES 🔥
+                    if(btn) btn.innerText = "SUBIENDO RÁPIDO...";
+
+                    // 3. Subimos todo de un solo golpe
                     await window.firebaseTools.setDoc(salaRef, {
-                        cartonesOficiales: cartonesParaFirebase,
+                        cartonesEmpaquetados: paqueteTexto, // Lo guardamos con un nuevo nombre
                         nombreSerial: serialActivo.nombre,
                         pinSala: window.MI_CODIGO_SALA,
                         estado: "activo"
@@ -1133,8 +1138,11 @@
                 }
             } catch (error) {
                 console.error("Error subiendo serial:", error);
-                alert("Error al conectar con la nube. Verifica tu internet.");
-                if(btn) btn.innerText = "ERROR";
+                alert("Error al conectar: " + error.message);
+                if(btn) {
+                    btn.innerText = "ERROR";
+                    btn.style.backgroundColor = "#dc3545";
+                }
             }
         };
         window.eliminarSerial = (idx) => { if(!checkSecurity()) return; if(confirm("¿Borrar?")){ dbLocal.serialesExtra.splice(idx,1); dbLocal.serialActivoIndex=-1; guardarDatos(); actualizarListaSeriales(); } };
