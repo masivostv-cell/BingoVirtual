@@ -184,14 +184,33 @@
 
                 if (salaDoc.exists()) {
                     const datosSala = salaDoc.data();
-                    if (!datosSala.cartonesOficiales) {
+                    
+                    // --- NUEVA LÓGICA DE DESEMPAQUETADO ---
+                    let todosLosCartones = null;
+
+                    // 1. Verificamos si los cartones vienen en el nuevo formato "empaquetado"
+                    if (datosSala.cartonesEmpaquetados) {
+                        try {
+                            todosLosCartones = JSON.parse(datosSala.cartonesEmpaquetados);
+                        } catch (e) {
+                            console.error("Error al desempaquetar cartones:", e);
+                        }
+                    } 
+                    // 2. Por si acaso, mantenemos compatibilidad con el formato viejo
+                    else if (datosSala.cartonesOficiales) {
+                        todosLosCartones = datosSala.cartonesOficiales;
+                    }
+
+                    // 3. Si no hay cartones de ninguna forma, bloqueamos
+                    if (!todosLosCartones) {
                         alert("El administrador aún no ha subido los cartones a esta sala.");
                         btnLogin.innerText = "Ingresar al Juego";
                         btnLogin.disabled = false;
                         return;
                     }
 
-                    const cartonBuscado = datosSala.cartonesOficiales[numCarton];
+                    // 4. Buscamos el cartón específico del jugador
+                    const cartonBuscado = todosLosCartones[numCarton];
                     
                     if (cartonBuscado) {
                         miCartonNumeros = cartonBuscado;
