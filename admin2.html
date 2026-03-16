@@ -1150,10 +1150,9 @@ window.copiarSecuenciaJugada = () => {
             const serialActivo = dbLocal.serialesExtra[idx];
             if(!serialActivo || !serialActivo.lista) return;
 
-            // Buscamos el botón específico que se presionó
             const btn = document.querySelector(`button[onclick="seleccionarSerial(${idx})"]`);
             if(btn) {
-                btn.innerText = "PREPARANDO...";
+                btn.innerText = "EMPAQUETANDO...";
                 btn.style.backgroundColor = "#ffc107";
                 btn.style.color = "black";
             }
@@ -1162,36 +1161,25 @@ window.copiarSecuenciaJugada = () => {
                 if (window.db && window.firebaseTools) {
                     const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
                     
-                    // 1. Limpiamos los cartones viejos de la nube para no mezclar juegos
+                    // 1. Agrupamos todos los cartones
+                    let cartonesCompactos = {};
+                    serialActivo.lista.forEach(c => {
+                        cartonesCompactos[c.carton.toString()] = c.numeros;
+                    });
+                    
+                    // 2. EL TRUCO MAGICO: Convertimos la lista inmensa en un solo texto.
+                    // Esto pesa poquísimo y burla el límite de 40,000 índices de Firebase.
+                    const paqueteTexto = JSON.stringify(cartonesCompactos);
+
+                    if(btn) btn.innerText = "SUBIENDO RÁPIDO...";
+
+                    // 3. Subimos todo de un solo golpe
                     await window.firebaseTools.setDoc(salaRef, {
-                        cartonesOficiales: {}, 
+                        cartonesEmpaquetados: paqueteTexto, // Lo guardamos con un nuevo nombre
                         nombreSerial: serialActivo.nombre,
                         pinSala: window.MI_CODIGO_SALA,
                         estado: "activo"
                     }, { merge: true });
-
-                    // 2. LÓGICA DE SUBIDA "POCO A POCO" (Lotes de 500 cartones)
-                    const totalCartones = serialActivo.lista.length;
-                    const tamanoLote = 500;
-
-                    for (let i = 0; i < totalCartones; i += tamanoLote) {
-                        const lote = serialActivo.lista.slice(i, i + tamanoLote);
-                        let cartonesParaFirebase = {};
-
-                        // Empaquetamos solo los 500 de este turno
-                        lote.forEach(c => {
-                            cartonesParaFirebase[`cartonesOficiales.${c.carton}`] = c.numeros;
-                        });
-
-                        // Actualizamos el texto del botón para ver el progreso en vivo
-                        if(btn) btn.innerText = `SUBIENDO ${Math.min(i + tamanoLote, totalCartones)}/${totalCartones}...`;
-
-                        // Subimos el lote a Firebase
-                        await window.firebaseTools.updateDoc(salaRef, cartonesParaFirebase);
-
-                        // Pausa de medio segundo (500ms) para dejar respirar a Firebase
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
 
                     if(btn) {
                         btn.innerText = "¡SUBIDO!";
@@ -1205,7 +1193,7 @@ window.copiarSecuenciaJugada = () => {
                 }
             } catch (error) {
                 console.error("Error subiendo serial:", error);
-                alert("Error al conectar. Firebase rechazó el lote: " + error.message);
+                alert("Error al conectar: " + error.message);
                 if(btn) {
                     btn.innerText = "ERROR";
                     btn.style.backgroundColor = "#dc3545";
