@@ -474,7 +474,7 @@
 <script>
     // --- VARIABLES DE SEGURIDAD ---
     let SISTEMA_AUTORIZADO = false; 
-    const URL_HOJA_EXCEL = "https://script.google.com/macros/s/AKfycbwdlislj9hAiVGisY7oc_cKnZvQQxIJK3K5wljUWCJEAksqp1WjiRKOOiWNS75eCIc9/exec"; 
+    const URL_HOJA_EXCEL = "https://script.google.com/macros/s/AKfycbyL2FoyRBQ4sECi_uMXqL1WG3gnSQFXw2pI6NXNqZwJlk3_gBdH_kdGlG2_QVFtI6vc/exec"; 
     const LOCAL_STORAGE_KEY = 'bingoSala2_V15_MASTER';
 
     // --- DICCIONARIO DE FIGURAS PRECARGADAS ---
@@ -716,7 +716,7 @@
         errorMsg.style.display = 'none';
 
         try {
-            const response = await fetch(`${URL_HOJA_EXCEL}?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
+            const response = await fetch(`${URL_HOJA_EXCEL}?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&hoja=linea`);
             const result = await response.text();
             
             const partes = result.trim().split('|');
