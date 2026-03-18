@@ -142,8 +142,10 @@
             Sala: <span id="display-sala">---</span> &nbsp;|&nbsp; Jugador: <span id="display-nombre">---</span>
         </div>
 
+        <div id="video-container" style="display:none; width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 2px solid #444;">
+            <iframe id="video-envivo" width="100%" height="250" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
         <h3 style="margin: 0 0 10px 0; color: #ffc107; font-size: 24px;">CARTÓN #<span id="display-num-carton"></span></h3>
-        <div id="mi-carton"></div>
 
         <button id="btn-bingo" onclick="cantarBingo()">¡BINGO!</button>
     </div>
@@ -224,7 +226,10 @@
                         document.getElementById('display-sala').innerText = sala;
                         document.getElementById('display-nombre').innerText = nombre;
                         document.getElementById('display-num-carton').innerText = numCarton;
-
+                        if (window.videoEnvivoID) {
+                            document.getElementById('video-container').style.display = 'block';
+                            document.getElementById('video-envivo').src = `https://www.youtube.com/embed/${window.videoEnvivoID}?autoplay=1`;
+                        }
                         renderizarCarton();
                         inicializarTablero75();
 
@@ -389,32 +394,25 @@
                 }
             }
         }
-       // --- CÓDIGO PARA PRECARGAR SALA Y CARTÓN DESDE LA URL ---
+       // --- CÓDIGO PARA PRECARGAR SALA, CARTÓN Y VIDEO DESDE LA URL ---
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Buscar los valores en la URL (ej: ?sala=123456&carton=15)
             const salaQuery = urlParams.get('sala');
             const cartonQuery = urlParams.get('carton');
+            const videoQuery = urlParams.get('video'); // Leemos el video
 
-            // Mantengo la opción del # por si usas enlaces solo con la sala (ej: #123456)
             const salaHash = window.location.hash.substring(1);
             const codigoDetectado = salaQuery || salaHash;
 
-            // 1. Si hay sala en la URL, llenamos la casilla
-            if (codigoDetectado) {
-                document.getElementById('codigo-sala').value = codigoDetectado.toUpperCase();
-            }
+            if (codigoDetectado) document.getElementById('codigo-sala').value = codigoDetectado.toUpperCase();
+            if (cartonQuery) document.getElementById('numero-carton').value = cartonQuery;
+            
+            // Guardamos el ID del video temporalmente para usarlo al darle "Ingresar"
+            // Si no pones nada en la URL, cargará el tuyo de Caracol por defecto.
+            window.videoEnvivoID = videoQuery || "kMNm9L0TM1w"; 
 
-            // 2. Si hay cartón en la URL, llenamos la casilla
-            if (cartonQuery) {
-                document.getElementById('numero-carton').value = cartonQuery;
-            }
-
-            // 3. Si ambos datos se llenaron solos, enfocamos la casilla del nombre
-            if (codigoDetectado && cartonQuery) {
-                document.getElementById('nombre-jugador').focus();
-            }
+            if (codigoDetectado && cartonQuery) document.getElementById('nombre-jugador').focus();
         });
     </script>
 </body>
