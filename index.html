@@ -389,15 +389,31 @@
                 }
             }
         }
-        // --- CÓDIGO PARA PRECARGAR LA SALA DESDE LA URL ---
+       // --- CÓDIGO PARA PRECARGAR SALA Y CARTÓN DESDE LA URL ---
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
+            
+            // Buscar los valores en la URL (ej: ?sala=123456&carton=15)
             const salaQuery = urlParams.get('sala');
+            const cartonQuery = urlParams.get('carton');
+
+            // Mantengo la opción del # por si usas enlaces solo con la sala (ej: #123456)
             const salaHash = window.location.hash.substring(1);
             const codigoDetectado = salaQuery || salaHash;
 
+            // 1. Si hay sala en la URL, llenamos la casilla
             if (codigoDetectado) {
                 document.getElementById('codigo-sala').value = codigoDetectado.toUpperCase();
+            }
+
+            // 2. Si hay cartón en la URL, llenamos la casilla
+            if (cartonQuery) {
+                document.getElementById('numero-carton').value = cartonQuery;
+            }
+
+            // 3. Si ambos datos se llenaron solos, enfocamos la casilla del nombre
+            if (codigoDetectado && cartonQuery) {
+                document.getElementById('nombre-jugador').focus();
             }
         });
     </script>
