@@ -389,6 +389,17 @@
                 }
             }
         }
+        // --- CÓDIGO PARA PRECARGAR LA SALA DESDE LA URL ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const salaQuery = urlParams.get('sala');
+            const salaHash = window.location.hash.substring(1);
+            const codigoDetectado = salaQuery || salaHash;
+
+            if (codigoDetectado) {
+                document.getElementById('codigo-sala').value = codigoDetectado.toUpperCase();
+            }
+        });
     </script>
 </body>
 </html>
