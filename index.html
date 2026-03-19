@@ -298,22 +298,27 @@
         window.toggleMarca = (elemento) => { elemento.classList.toggle('marcado'); };
 
         window.cantarBingo = async () => {
-            const nombre = document.getElementById('nombre-jugador').value;
-            const sala = document.getElementById('codigo-sala').value.toUpperCase();
+            // En lugar de buscar en los inputs ocultos, leemos los textos que ya están en pantalla
+            const nombre = document.getElementById('display-nombre').innerText;
+            const sala = document.getElementById('display-sala').innerText;
             const btn = document.getElementById('btn-bingo');
             
             btn.innerText = "ENVIANDO...";
             try {
                 const salaRef = doc(db, "salas", sala);
+                // Intentamos escribir la alerta en la base de datos
                 await updateDoc(salaRef, {
                     alertaBingo: { nombre: nombre, carton: numCartonOficial, timestamp: Date.now() }
                 });
+                
                 btn.innerText = "¡BINGO ENVIADO!";
                 btn.style.backgroundColor = "#28a745"; 
                 alert(`¡Has cantado BINGO con el Cartón #${numCartonOficial}!`);
                 setTimeout(() => { btn.innerText = "¡BINGO!"; btn.style.backgroundColor = "#d32f2f"; }, 5000);
             } catch (error) {
-                alert("Error de conexión.");
+                // AQUÍ ESTÁ LA MAGIA PARA VER EL ERROR REAL
+                console.error("Error exacto al enviar el Bingo a Firebase:", error);
+                alert("Error al cantar Bingo. Revisa la consola (F12) para ver el motivo.");
                 btn.innerText = "¡BINGO!";
             }
         };
