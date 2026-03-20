@@ -382,7 +382,6 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  // Agregamos onSnapshot aquí arriba para poder escuchar cambios en tiempo real
   import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -397,44 +396,38 @@
   const app = initializeApp(firebaseConfig);
   window.db = getFirestore(app);
   
-  // Guardamos las herramientas
-  window.firebaseTools = { doc, setDoc, updateDoc };
+  // Guardamos las herramientas y agregamos onSnapshot
+  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
-  // 🔥 // 🔥 RADAR DE BINGOS CANTADOS (PIN DE 6 CIFRAS) 🔥
-  window.ultimoBingoVisto = Date.now(); 
+  // 🔥 NUEVO RADAR DE BINGOS CANTADOS (A PRUEBA DE FALLOS) 🔥
+  window.iniciarRadarDeBingos = (pinDeLaSalaActual) => {
+      let ultimoBingoVisto = Date.now(); 
+      const salaRefRadar = doc(window.db, "salas", pinDeLaSalaActual);
 
-  // Obtenemos el usuario para calcular el PIN de la sala
-  const usuarioParaRadar = localStorage.getItem('bingo_user') || "DEFAULT";
-  
-  // Función para generar el PIN (exactamente igual a la de iniciarAppBingo)
-  const obtenerPINRadar = (nombre) => {
-      let hash = 0;
-      for (let i = 0; i < nombre.length; i++) {
-          hash = ((hash << 5) - hash) + nombre.charCodeAt(i);
-          hash |= 0; 
-      }
-      return ((Math.abs(hash) % 900000) + 100000).toString();
-  };
-
-  const salaPINRadar = obtenerPINRadar(usuarioParaRadar.toUpperCase());
-  const salaRefRadar = doc(window.db, "salas", salaPINRadar);
-
-  // Escuchamos la sala en tiempo real
-  onSnapshot(salaRefRadar, (documento) => {
-      if(documento.exists()) {
-          const datos = documento.data();
-          
-          // Si hay una alerta de bingo y es más reciente que la última que vimos...
-          if(datos.alertaBingo && datos.alertaBingo.timestamp > window.ultimoBingoVisto) {
-              window.ultimoBingoVisto = datos.alertaBingo.timestamp;
+      // Escuchamos la sala correcta en tiempo real
+      onSnapshot(salaRefRadar, (documento) => {
+          if(documento.exists()) {
+              const datos = documento.data();
               
-              // Disparamos la alerta en tu pantalla de administrador
-              alert(`🚨 ¡ATENCIÓN: BINGO CANTADO! 🚨\n\nEl jugador "${datos.alertaBingo.nombre.toUpperCase()}" acaba de cantar BINGO con el CARTÓN #${datos.alertaBingo.carton}.\n\nRevisa el cartón #${datos.alertaBingo.carton} en tu verificador.`);
-          }
-      }
-  });
+              if(datos.alertaBingo && datos.alertaBingo.timestamp > ultimoBingoVisto) {
+                  ultimoBingoVisto = datos.alertaBingo.timestamp;
+                  
+                  // 1. Llenamos automáticamente el cuadro de texto del administrador
+                  const inputRevision = document.getElementById('num-revisar');
+                  if(inputRevision) inputRevision.value = datos.alertaBingo.carton;
 
+                  // 2. Disparamos la alerta en pantalla
+                  alert(`🚨 ¡ATENCIÓN: BINGO CANTADO! 🚨\n\nEl jugador "${datos.alertaBingo.nombre.toUpperCase()}" acaba de cantar BINGO con el CARTÓN #${datos.alertaBingo.carton}.\n\nEl número ya se puso en tu verificador, solo haz clic en "1. VERIFICAR".`);
+              }
+          }
+      });
+  };
+// 🔥 NUEVO: AUTO-ARRANQUE DEL RADAR 🔥
+  // Si entramos tan rápido que el radar no se encendió, lo encendemos ahora:
+  if (window.MI_CODIGO_SALA) {
+      window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
+  }
  
      // 🔥 FUNCIÓN PARA ANUNCIAR AL GANADOR (ESTA ES LA QUE USA EL BOTÓN 2) 🔥
   window.anunciarGanadorOficial = async (numeroDesdeCarton) => {
@@ -835,7 +828,10 @@
         if(document.getElementById('lbl-mi-sala')) document.getElementById('lbl-mi-sala').innerText = window.MI_CODIGO_SALA;
         if(document.getElementById('display-codigo-sala')) document.getElementById('display-codigo-sala').innerText = window.MI_CODIGO_SALA;
 
-        // --- ELIMINÉ LAS LÍNEAS QUE DECÍAN "SALA-" + NOMBRE ---
+        // 🔥 ENCENDER EL RADAR CON EL PIN CORRECTO 🔥
+        if (window.iniciarRadarDeBingos) {
+            window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
+        }
 
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {

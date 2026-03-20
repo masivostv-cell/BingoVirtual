@@ -170,6 +170,8 @@
 
         let miCartonNumeros = [];
         let numCartonOficial = "";
+        let balotasGlobales = [];
+        let figuraGlobal = [];
 
         window.entrarSala = async () => {
             const nombre = document.getElementById('nombre-jugador').value;
@@ -253,18 +255,23 @@
                                     limpiarPantallaJugador();
                                 }
 
-                                // 2. Actualizar Balotas
-                                if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
-                                    actualizarDatosBalotas(datos.balotasLlamadas);
-                                } else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
-                                    limpiarPantallaJugador();
-                                }
-                                
-                                // 3. Actualizar Figura
-                                if (datos.figuraActual) {
-                                    document.getElementById('nombre-figura-display').innerText = datos.nombreFigura || "BINGO";
-                                    renderizarFigura(datos.figuraActual);
-                                }
+                                // Reemplaza los pasos 2 y 3 del onSnapshot por esto:
+
+// 2. Actualizar Balotas
+if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
+    balotasGlobales = datos.balotasLlamadas; // <-- GUARDA EN MEMORIA
+    actualizarDatosBalotas(datos.balotasLlamadas);
+} else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
+    balotasGlobales = []; // <-- LIMPIA LA MEMORIA
+    limpiarPantallaJugador();
+}
+
+// 3. Actualizar Figura
+if (datos.figuraActual) {
+    figuraGlobal = datos.figuraActual; // <-- GUARDA EN MEMORIA
+    document.getElementById('nombre-figura-display').innerText = datos.nombreFigura || "BINGO";
+    renderizarFigura(datos.figuraActual);
+}
 
                                 // 4. Ganador
                                 if (datos.ganadorConfirmado) {
@@ -298,30 +305,62 @@
         window.toggleMarca = (elemento) => { elemento.classList.toggle('marcado'); };
 
         window.cantarBingo = async () => {
-            // En lugar de buscar en los inputs ocultos, leemos los textos que ya están en pantalla
-            const nombre = document.getElementById('display-nombre').innerText;
-            const sala = document.getElementById('display-sala').innerText;
-            const btn = document.getElementById('btn-bingo');
+    // --- NUEVA VALIDACIÓN LOCAL DE BINGO ---
+    if (!figuraGlobal || figuraGlobal.length !== 25) {
+        alert("Aún no hay una figura válida configurada en la sala.");
+        return;
+    }
+
+    // Este mapeo traduce la cuadricula visual 5x5 a tu array de datos
+    const mapeoCarton = [0,5,10,15,20, 1,6,11,16,21, 2,7,12,17,22, 3,8,13,18,23, 4,9,14,19,24];
+    let bingoValido = true;
+
+    for (let i = 0; i < 25; i++) {
+        // Si la celda es parte de la figura que exige el administrador...
+        if (figuraGlobal[i]) { 
+            let numeroEnCarton = miCartonNumeros[mapeoCarton[i]];
             
-            btn.innerText = "ENVIANDO...";
-            try {
-                const salaRef = doc(db, "salas", sala);
-                // Intentamos escribir la alerta en la base de datos
-                await updateDoc(salaRef, {
-                    alertaBingo: { nombre: nombre, carton: numCartonOficial, timestamp: Date.now() }
-                });
-                
-                btn.innerText = "¡BINGO ENVIADO!";
-                btn.style.backgroundColor = "#28a745"; 
-                alert(`¡Has cantado BINGO con el Cartón #${numCartonOficial}!`);
-                setTimeout(() => { btn.innerText = "¡BINGO!"; btn.style.backgroundColor = "#d32f2f"; }, 5000);
-            } catch (error) {
-                // AQUÍ ESTÁ LA MAGIA PARA VER EL ERROR REAL
-                console.error("Error exacto al enviar el Bingo a Firebase:", error);
-                alert("Error al cantar Bingo. Revisa la consola (F12) para ver el motivo.");
-                btn.innerText = "¡BINGO!";
+            // Verificamos si NO es el centro (0) y si la balota NO ha salido
+            if (numeroEnCarton !== 0 && !balotasGlobales.includes(numeroEnCarton)) {
+                bingoValido = false;
+                break; // Cortamos el ciclo apenas le falte un número
             }
-        };
+        }
+    }
+
+    if (!bingoValido) {
+        alert("¡FALSA ALARMA! Todavía te faltan números para completar la figura.");
+        return; // Termina la ejecución aquí, NO envía nada al administrador
+    }
+    // --- FIN VALIDACIÓN LOCAL ---
+
+    // Agregamos .trim() para evitar que espacios en blanco dañen la ruta en Firebase
+    const nombre = document.getElementById('display-nombre').innerText.trim();
+    const sala = document.getElementById('display-sala').innerText.trim();
+    const btn = document.getElementById('btn-bingo');
+    
+    btn.innerText = "ENVIANDO...";
+    try {
+        const salaRef = doc(db, "salas", sala);
+        const datosBingo = { nombre: nombre, carton: numCartonOficial, timestamp: Date.now() };
+        
+        // Esto te permitirá ver en la consola (F12) exactamente qué se está enviando
+        console.log("Enviando Bingo a la sala:", sala, "Datos:", datosBingo);
+
+        await updateDoc(salaRef, {
+            alertaBingo: datosBingo
+        });
+        
+        btn.innerText = "¡BINGO ENVIADO!";
+        btn.style.backgroundColor = "#28a745"; 
+        alert(`¡Validación exitosa! Has cantado BINGO con el Cartón #${numCartonOficial}.`);
+        setTimeout(() => { btn.innerText = "¡BINGO!"; btn.style.backgroundColor = "#d32f2f"; }, 5000);
+    } catch (error) {
+        console.error("Error exacto al enviar el Bingo a Firebase:", error);
+        alert("Error al cantar Bingo. Revisa la consola (F12) para ver el motivo.");
+        btn.innerText = "¡BINGO!";
+    }
+};
 
         function limpiarPantallaJugador() {
             document.getElementById('main-letra').innerText = "-";
