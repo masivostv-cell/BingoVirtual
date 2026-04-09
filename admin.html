@@ -386,7 +386,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDGlCcqIxjX3c_GustIB7_vjtyFwZ_q010",
@@ -401,7 +401,7 @@
   window.db = getFirestore(app);
   
   // Guardamos las herramientas y agregamos onSnapshot
-  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot, collection };
+  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
   // 🔥 NUEVO RADAR DE BINGOS CANTADOS (A PRUEBA DE FALLOS) 🔥
@@ -1285,19 +1285,28 @@
             // 🔥 NUEVO: Enviamos el GATILLO INFALIBLE de reinicio a Firebase
             try {
                 if (window.db && window.firebaseTools) {
-                    const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    
+                    // 1. ELIMINAR TODOS LOS JUGADORES FANTASMAS DE LA BASE DE DATOS
+                    const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
+                    const snapshot = await window.firebaseTools.getDocs(jugadoresRef);
+                    snapshot.forEach((docSnap) => {
+                        window.firebaseTools.deleteDoc(docSnap.ref);
+                    });
+
+                    // 2. REINICIAR LA SALA A CERO
+                    const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
                     await window.firebaseTools.setDoc(salaRef, {
                         estado: "esperando",
                         balotasLlamadas: [], 
                         ganadorConfirmado: null, 
                         alertaBingo: null,
-                        senalReinicio: Date.now() // ESTO OBLIGA A LOS TELÉFONOS A BORRARSE
+                        senalReinicio: Date.now() 
                     }, { merge: true });
                 }
             } catch (error) {
-                console.error("Error reiniciando la sala en Firebase:", error);
+                console.error("Error limpiando la sala en Firebase:", error);
             }
-        };
 
         // --- LÓGICA DEL NUEVO MODAL DE FIGURAS ---
         window.abrirConfig = () => {
@@ -1468,7 +1477,8 @@
 
         actualizarListaSeriales();
         renderizar();
-    }
+   } 
+   } 
 </script>
 </body>
 </html>
