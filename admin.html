@@ -207,6 +207,10 @@
                 </div>
 
                 <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="background: #28a745; color: white; padding: 3px 15px; border-radius: 8px; font-weight: bold; font-size: 2vh; margin-bottom: 5px; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                        👥 JUGADORES: <span id="display-jugadores" style="color:#ffeb3b; font-size: 2.5vh; font-weight: 900;">0</span>
+                    </div>
+
                     <div style="background: #004080; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
                         SALA: <span id="display-codigo-sala" style="color:#ffc107; letter-spacing: 2px;">---</span>
                     </div>
@@ -382,7 +386,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDGlCcqIxjX3c_GustIB7_vjtyFwZ_q010",
@@ -397,7 +401,7 @@
   window.db = getFirestore(app);
   
   // Guardamos las herramientas y agregamos onSnapshot
-  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot };
+  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot, collection };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
   // 🔥 NUEVO RADAR DE BINGOS CANTADOS (A PRUEBA DE FALLOS) 🔥
@@ -833,6 +837,17 @@
             window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
         }
 
+        // 🔥 NUEVO: CONTADOR DE JUGADORES EN TIEMPO REAL 🔥
+        if (window.db && window.firebaseTools && window.firebaseTools.collection) {
+            const jugadoresRef = window.firebaseTools.collection(window.db, "salas", window.MI_CODIGO_SALA, "jugadores");
+            window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
+                const totalJugadores = snapshot.size; // Cuenta cuántos documentos hay
+                if(document.getElementById('display-jugadores')) {
+                    document.getElementById('display-jugadores').innerText = totalJugadores;
+                }
+            });
+        }
+        
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {
             const ahora = new Date();
