@@ -238,6 +238,14 @@
             const datosSala = salaDoc.data();
             let todosLosCartones = null;
 
+            // 🔥 VALIDAR SI LA SALA ESTÁ ABIERTA 🔥
+            if (datosSala.estadoSala !== "abierta") {
+                alert("⏳ La sala está en espera para ser abierta por el administrador. Intenta de nuevo en un momento.");
+                btnLogin.innerText = "Ingresar al Juego";
+                btnLogin.disabled = false;
+                return; // Bloquea el acceso y termina la función aquí
+            }
+
             if (datosSala.cartonesEmpaquetados) {
                 try { todosLosCartones = JSON.parse(datosSala.cartonesEmpaquetados); } 
                 catch (e) { console.error("Error al desempaquetar:", e); }
@@ -299,20 +307,12 @@
                 if (docSnapshot.exists()) {
                     const datos = docSnapshot.data();
                     
-                    if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
-                        window.ultimoReinicioVisto = datos.senalReinicio;
-                        
-                        // Le damos medio segundo para procesar y le preguntamos
-                        setTimeout(() => {
-                            const seguirJugando = confirm("🔄 El Administrador ha preparado una NUEVA PARTIDA.\n\n¿Deseas seguir jugando en esta sala con tus mismos cartones?");
-                            
-                            if (seguirJugando) {
-                                limpiarPantallaJugador(); // Se queda y limpia su cartón
-                            } else {
-                                salirDelJuego(); // Borra su nombre de Firebase
-                                window.location.reload(); // Lo devuelve a la pantalla de inicio
-                            }
-                        }, 500);
+                    // 🔥 DETECTAR SI EL ADMINISTRADOR CERRÓ LA SALA 🔥
+                    if (datos.senalExpulsion && window.ultimoReinicioVisto !== datos.senalExpulsion) {
+                        window.ultimoReinicioVisto = datos.senalExpulsion;
+                        salirDelJuego(); // Borra su nombre de Firebase
+                        alert("🔴 El administrador ha cerrado la sala. Serás llevado al inicio.");
+                        window.location.reload(); // Lo saca inmediatamente
                     }
 
                     if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
