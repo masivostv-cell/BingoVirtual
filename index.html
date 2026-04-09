@@ -86,54 +86,42 @@
         .numero-carton.marcado { background-color: #ffeb3b; }
         .numero-carton.centro { background-color: #ccc; font-size: 20px; }
 
-        /* --- ESTILO BOTÓN FLOATING ACTION BINGO --- */
+        /* --- ESTILO NUEVO BOTÓN CANTAR BINGO --- */
         #container-btn-bingo {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000; /* Asegura que esté por encima de todo */
+            width: 100%;
+            max-width: 450px; /* Mismo ancho que el cartón */
+            margin: 15px auto; /* Centrado con espacio arriba y abajo */
+            display: flex;
+            justify-content: center;
         }
 
         #btn-bingo {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%; /* Lo hace redondo */
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
             background-color: #d32f2f;
             color: white;
-            border: none;
+            border: 3px solid #ff4d4d;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Sombra para efecto flotante */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 22px;
+            font-weight: 900;
+            box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4);
+            transition: all 0.2s ease;
             text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         #btn-bingo:hover {
             background-color: #b71c1c;
-            transform: scale(1.05); /* Efecto al pasar el mouse */
+            transform: translateY(-2px);
         }
 
         #btn-bingo:disabled {
             background-color: #9e9e9e;
+            border-color: #777;
             cursor: not-allowed;
             box-shadow: none;
-        }
-
-        /* Ajuste para móviles para no tapar la última balota */
-        @media (max-width: 600px) {
-            #container-btn-bingo {
-                bottom: 80px; /* Sube un poco más en móviles */
-                right: 15px;
-            }
-            #btn-bingo {
-                width: 65px;
-                height: 65px;
-                font-size: 13px;
-            }
+            transform: none;
         }
     </style>
 </head>
@@ -189,20 +177,17 @@
             Sala: <span id="display-sala">---</span> &nbsp;|&nbsp; Jugador: <span id="display-nombre">---</span>
         </div>
 
+        <div id="container-btn-bingo">
+            <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR BINGO!</button>
+        </div>
+
         <div id="video-container" style="display:none; position: absolute; top: -9999px; left: -9999px; width: 300px; height: 300px; opacity: 0; pointer-events: none;">
             <iframe id="video-envivo" width="300" height="300" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
-        <h3 style="margin: 0 0 10px 0; color: #ffc107; font-size: 24px;">CARTÓN #<span id="display-num-carton"></span></h3>
 
         <div id="mi-carton" style="width: 100%; max-width: 450px; margin: 0 auto;"></div>
-
-        
     </div>
-    <div id="container-btn-bingo">
-            <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR!</button>
-        </div>
-
-    </div> 
+     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
