@@ -1287,14 +1287,7 @@
                 if (window.db && window.firebaseTools) {
                     const pinSeguro = String(window.MI_CODIGO_SALA).trim();
                     
-                    // 1. ELIMINAR TODOS LOS JUGADORES FANTASMAS DE LA BASE DE DATOS
-                    const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
-                    const snapshot = await window.firebaseTools.getDocs(jugadoresRef);
-                    snapshot.forEach((docSnap) => {
-                        window.firebaseTools.deleteDoc(docSnap.ref);
-                    });
-
-                    // 2. REINICIAR LA SALA A CERO
+                    // Solo reiniciamos la sala. ¡Los jugadores decidirán si se quedan o se van!
                     const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
                     await window.firebaseTools.setDoc(salaRef, {
                         estado: "esperando",

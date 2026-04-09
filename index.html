@@ -177,6 +177,10 @@
             Sala: <span id="display-sala">---</span> &nbsp;|&nbsp; Jugador: <span id="display-nombre">---</span>
         </div>
 
+        <button id="btn-activar-audio" onclick="desbloquearAudio()" style="background:#17a2b8; color:white; padding:12px; border:2px solid white; border-radius:8px; width:100%; max-width:450px; margin: 0 auto 15px auto; font-weight:bold; font-size:18px; cursor:pointer; display:block; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            🔊 ACTIVAR AUDIO (iPhone/Móvil)
+        </button>
+
         <div id="container-btn-bingo">
             <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR BINGO!</button>
         </div>
@@ -209,6 +213,7 @@
         let balotasGlobales = [];
         let figuraGlobal = [];
         let miReferenciaDeJugador = null;
+        window.ultimaBalotaCantada = 0;
 
         window.entrarSala = async () => {
     const nombre = document.getElementById('nombre-jugador').value;
@@ -296,14 +301,33 @@
                     
                     if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
                         window.ultimoReinicioVisto = datos.senalReinicio;
-                        limpiarPantallaJugador();
+                        
+                        // Le damos medio segundo para procesar y le preguntamos
+                        setTimeout(() => {
+                            const seguirJugando = confirm("🔄 El Administrador ha preparado una NUEVA PARTIDA.\n\n¿Deseas seguir jugando en esta sala con tus mismos cartones?");
+                            
+                            if (seguirJugando) {
+                                limpiarPantallaJugador(); // Se queda y limpia su cartón
+                            } else {
+                                salirDelJuego(); // Borra su nombre de Firebase
+                                window.location.reload(); // Lo devuelve a la pantalla de inicio
+                            }
+                        }, 500);
                     }
 
                     if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
                         balotasGlobales = datos.balotasLlamadas;
                         actualizarDatosBalotas(datos.balotasLlamadas);
+                        
+                        // 🔥 REVISAR SI HAY UN NÚMERO NUEVO PARA CANTARLO 🔥
+                        let ultimoNumeroLlamado = datos.balotasLlamadas[datos.balotasLlamadas.length - 1];
+                        if (window.ultimaBalotaCantada !== ultimoNumeroLlamado) {
+                            window.ultimaBalotaCantada = ultimoNumeroLlamado;
+                            window.cantarNumeroVoz(ultimoNumeroLlamado);
+                        }
                     } else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
                         balotasGlobales = [];
+                        window.ultimaBalotaCantada = 0; // Reiniciamos la memoria
                         limpiarPantallaJugador();
                     }
 
@@ -524,6 +548,50 @@
         };
         window.addEventListener('beforeunload', salirDelJuego);
         window.addEventListener('pagehide', salirDelJuego); 
+
+
+        // 🔥 FUNCIÓN PARA DESBLOQUEAR EL AUDIO EN IPHONE/SAFARI 🔥
+        window.desbloquearAudio = () => {
+            if ('speechSynthesis' in window) {
+                // El truco: Hacemos que el celular "diga" un texto vacío
+                let mensajeMudo = new SpeechSynthesisUtterance("");
+                mensajeMudo.volume = 0; // Sin volumen para que no haga ruido raro
+                window.speechSynthesis.speak(mensajeMudo);
+
+                // Cambiamos el botón para confirmar visualmente
+                const btn = document.getElementById('btn-activar-audio');
+                btn.innerText = "✅ AUDIO ACTIVADO";
+                btn.style.backgroundColor = "#28a745"; // Se pone verde
+
+                // Desaparecemos el botón después de 2 segundos para que no estorbe
+                setTimeout(() => {
+                    btn.style.display = 'none';
+                }, 2000);
+            } else {
+                alert("Tu navegador no soporta voces automáticas.");
+            }
+        };
+        // 🔥 FUNCIÓN PARA CANTAR LA BALOTA CON LA VOZ DEL NAVEGADOR 🔥
+        window.cantarNumeroVoz = (numero) => {
+            if (!('speechSynthesis' in window)) return; // Verifica si el celular soporta voz
+
+            let letra = '';
+            if (numero <= 15) letra = 'B';
+            else if (numero <= 30) letra = 'I';
+            else if (numero <= 45) letra = 'N';
+            else if (numero <= 60) letra = 'G';
+            else letra = 'O';
+
+            // La coma hace que el asistente haga una pequeña pausa
+            let textoHablar = `${letra}, ${numero}`;
+
+            let mensaje = new SpeechSynthesisUtterance(textoHablar);
+            mensaje.lang = 'es-ES'; // Idioma español
+            mensaje.rate = 0.9;     // Velocidad un poco más lenta para claridad
+            mensaje.pitch = 1;      // Tono normal
+
+            window.speechSynthesis.speak(mensaje);
+        };
     </script>
 </body>
 </html>
