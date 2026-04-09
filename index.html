@@ -314,7 +314,11 @@
                         alert("🔴 El administrador ha cerrado la sala. Serás llevado al inicio.");
                         window.location.reload(); // Lo saca inmediatamente
                     }
-
+                    // 🔥 DETECTAR SI EL ADMINISTRADOR INICIÓ NUEVA PARTIDA (Limpieza suave) 🔥
+                    if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
+                        window.ultimoReinicioVisto = datos.senalReinicio;
+                        limpiarPantallaJugador(); // Solo limpia el cartón y las balotas
+                    }
                     if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
                         balotasGlobales = datos.balotasLlamadas;
                         actualizarDatosBalotas(datos.balotasLlamadas);

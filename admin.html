@@ -207,6 +207,11 @@
                 </div>
 
                 <div style="display:flex; flex-direction:column; align-items:center;">
+                    
+                    <div id="status-sala-banner" style="background: #dc3545; color: white; padding: 8px 20px; border-radius: 8px; font-weight: 900; font-size: 2.2vh; margin-bottom: 8px; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.3); width: 100%; text-align: center;">
+                        ⚠️ SALA CERRADA: para jugar por favor dale ABRIR
+                    </div>
+
                     <div style="background: #28a745; color: white; padding: 3px 15px; border-radius: 8px; font-weight: bold; font-size: 2vh; margin-bottom: 5px; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                         👥 JUGADORES: <span id="display-jugadores" style="color:#ffeb3b; font-size: 2.5vh; font-weight: 900;">0</span>
                     </div>
@@ -232,7 +237,7 @@
         <button onclick="abrirSala()" class="admin-btn" style="background:#28a745; border: 2px solid white; font-size: 18px;">🟢 ABRIR SALA</button>
         <button onclick="cerrarSala()" class="admin-btn" style="background:#dc3545; border: 2px solid white; font-size: 18px;">🔴 CERRAR SALA (Expulsar a todos)</button>
         <button onclick="logout()" class="admin-btn" style="background:#000;">SALIR / CERRAR CACHE</button>
-        
+        <button onclick="REINICIAR_JUEGO()" class="admin-btn" style="background:#ff9800; color:black; border: 2px solid white; font-size: 18px;">🔄 NUEVA PARTIDA (Limpiar Tablero)</button>
         <button onclick="borrarDatosFabrica()" class="admin-btn" style="background: #000; border: 2px solid red; color: red; margin-top: 15px; width: 100%;">
             ☢️ BORRAR TODO (RESTAURAR FÁBRICA)
         </button>
@@ -405,7 +410,7 @@
   window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
-  // 🔥 NUEVO RADAR DE BINGOS CANTADOS (A PRUEBA DE FALLOS) 🔥
+// 🔥 NUEVO RADAR DE BINGOS CANTADOS Y ESTADO DE SALA 🔥
   window.iniciarRadarDeBingos = (pinDeLaSalaActual) => {
       let ultimoBingoVisto = Date.now(); 
       const salaRefRadar = doc(window.db, "salas", pinDeLaSalaActual);
@@ -415,6 +420,19 @@
           if(documento.exists()) {
               const datos = documento.data();
               
+              // 🔥 NUEVO: ACTUALIZAR EL BANNER DE ESTADO VISUAL 🔥
+              const banner = document.getElementById('status-sala-banner');
+              if(banner) {
+                  if(datos.estadoSala === "abierta") {
+                      banner.innerText = "✅ SALA ABIERTA Y FUNCIONANDO";
+                      banner.style.background = "#28a745"; // Verde
+                  } else {
+                      banner.innerText = "⚠️ SALA CERRADA: para jugar por favor dale ABRIR";
+                      banner.style.background = "#dc3545"; // Rojo
+                  }
+              }
+
+              // Lógica original de alertas de Bingo
               if(datos.alertaBingo && datos.alertaBingo.timestamp > ultimoBingoVisto) {
                   ultimoBingoVisto = datos.alertaBingo.timestamp;
                   
@@ -428,7 +446,8 @@
           }
       });
   };
-// 🔥 NUEVO: AUTO-ARRANQUE DEL RADAR 🔥
+  
+  // 🔥 NUEVO: AUTO-ARRANQUE DEL RADAR 🔥
   // Si entramos tan rápido que el radar no se encendió, lo encendemos ahora:
   if (window.MI_CODIGO_SALA) {
       window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
@@ -1269,38 +1288,95 @@
 
         window.toggleAutoWin = (val) => { if(!checkSecurity()) return; dbLocal.config.autoWin = val; guardarDatos(); };
         
+        // 🔥 NUEVA LÓGICA: ABRIR SALA 🔥
+        window.abrirSala = async () => { 
+            if(!checkSecurity()) return;
+            if(!confirm("🟢 ¿Deseas ABRIR la sala? A partir de ahora los jugadores podrán ingresar.")) return;
+            
+            try {
+                if (window.db && window.firebaseTools) {
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
+                    await window.firebaseTools.setDoc(salaRef, {
+                        estadoSala: "abierta"
+                    }, { merge: true });
+                    alert("✅ La sala está ABIERTA. Los jugadores ya pueden entrar.");
+                }
+            } catch (error) {
+                console.error("Error abriendo la sala:", error);
+            }
+        };
+
+        // 🔥 NUEVA LÓGICA: CERRAR SALA Y EXPULSAR 🔥
+        window.cerrarSala = async () => { 
+            if(!checkSecurity()) return;
+            if(!confirm("🔴 ¿Estás seguro de CERRAR la sala?\n\nEsto expulsará a todos los jugadores inmediatamente y reiniciará el tablero.")) return;
+            
+            try {
+                if (window.db && window.firebaseTools) {
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    
+                    // 1. Mandar la señal de expulsión y cambiar estado a "cerrada"
+                    const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
+                    await window.firebaseTools.setDoc(salaRef, {
+                        estadoSala: "cerrada",
+                        senalExpulsion: Date.now(), // El gatillo que saca a todos
+                        balotasLlamadas: [], 
+                        ganadorConfirmado: null, 
+                        alertaBingo: null
+                    }, { merge: true });
+
+                    // 2. Pasar la "escoba" por la base de datos por si alguien cerró mal su navegador
+                    const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
+                    const snapshot = await window.firebaseTools.getDocs(jugadoresRef);
+                    snapshot.forEach((docSnap) => { window.firebaseTools.deleteDoc(docSnap.ref); });
+
+                    // 3. Limpiar tu pantalla de PC
+                    dbLocal.juego = []; 
+                    if(document.getElementById('timer-auto-container')) document.getElementById('timer-auto-container').style.display = 'none';
+                    guardarDatos(); 
+                    renderizar();
+                    alert("🚪 La sala ha sido CERRADA y el tablero está limpio.");
+                }
+            } catch (error) {
+                console.error("Error cerrando la sala:", error);
+            }
+        };
+
+        // 🔥 NUEVA LÓGICA: REINICIAR SOLO EL TABLERO (NUEVA PARTIDA) 🔥
         window.REINICIAR_JUEGO = async () => { 
             if(!checkSecurity()) return;
-            if(!confirm("¿Estás seguro de REINICIAR TODO para una nueva partida?")) return;
+            if(!confirm("🔄 ¿Estás seguro de iniciar una NUEVA PARTIDA?\n\nEsto limpiará los números de tu pantalla y de los celulares de los jugadores, pero NO los expulsará de la sala.")) return;
             
             dbLocal.juego = []; 
             lastWinCount = 0; 
             if(timerAuto) clearInterval(timerAuto);
             if(timerVisual) clearInterval(timerVisual);
             timerAuto = null;
-            document.getElementById('timer-auto-container').style.display = 'none';
-            document.getElementById('btn-auto').innerText = "AUTO (↑)";
+            if(document.getElementById('timer-auto-container')) document.getElementById('timer-auto-container').style.display = 'none';
+            if(document.getElementById('btn-auto')) document.getElementById('btn-auto').innerText = "AUTO (↑)";
             guardarDatos(); 
             renderizar();
 
-            // 🔥 NUEVO: Enviamos el GATILLO INFALIBLE de reinicio a Firebase
             try {
                 if (window.db && window.firebaseTools) {
                     const pinSeguro = String(window.MI_CODIGO_SALA).trim();
-                    
-                    // Solo reiniciamos la sala. ¡Los jugadores decidirán si se quedan o se van!
                     const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
+                    
+                    // Solo limpiamos los datos del juego, pero NO tocamos el "estadoSala"
                     await window.firebaseTools.setDoc(salaRef, {
-                        estado: "esperando",
                         balotasLlamadas: [], 
                         ganadorConfirmado: null, 
                         alertaBingo: null,
-                        senalReinicio: Date.now() 
+                        senalReinicio: Date.now() // Esta es la señal suave
                     }, { merge: true });
                 }
             } catch (error) {
-                console.error("Error limpiando la sala en Firebase:", error);
+                console.error("Error reiniciando el tablero:", error);
             }
+        };
+
+     
 
         // --- LÓGICA DEL NUEVO MODAL DE FIGURAS ---
         window.abrirConfig = () => {
@@ -1471,7 +1547,6 @@
 
         actualizarListaSeriales();
         renderizar();
-   } 
    } 
 </script>
 </body>
