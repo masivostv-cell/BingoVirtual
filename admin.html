@@ -838,15 +838,29 @@
             window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
         }
 
-        // 🔥 NUEVO: CONTADOR DE JUGADORES EN TIEMPO REAL 🔥
-        if (window.db && window.firebaseTools && window.firebaseTools.collection) {
-            const jugadoresRef = window.firebaseTools.collection(window.db, "salas", window.MI_CODIGO_SALA, "jugadores");
-            window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
-                const totalJugadores = snapshot.size; // Cuenta cuántos documentos hay
-                if(document.getElementById('display-jugadores')) {
-                    document.getElementById('display-jugadores').innerText = totalJugadores;
-                }
-            });
+        // 🔥 CONTADOR DE JUGADORES (VERSIÓN A PRUEBA DE FALLOS) 🔥
+        try {
+            const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+            console.log("📡 Iniciando radar de jugadores para la sala:", pinSeguro);
+            
+            if (window.db && window.firebaseTools && window.firebaseTools.collection) {
+                const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
+                
+                window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
+                    const totalJugadores = snapshot.size; 
+                    console.log("👥 Jugadores detectados en esta sala:", totalJugadores);
+                    
+                    if(document.getElementById('display-jugadores')) {
+                        document.getElementById('display-jugadores').innerText = totalJugadores;
+                    }
+                }, (error) => {
+                    console.error("❌ Error de Firebase al leer jugadores:", error);
+                });
+            } else {
+                console.error("❌ Faltan las herramientas de Firebase (collection no importado).");
+            }
+        } catch (err) {
+            console.error("❌ Fallo crítico al configurar el contador:", err);
         }
         
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
