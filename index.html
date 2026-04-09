@@ -196,9 +196,13 @@
 
         <div id="mi-carton" style="width: 100%; max-width: 450px; margin: 0 auto;"></div>
 
-        <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR BINGO!</button>
+        
     </div>
+    <div id="container-btn-bingo">
+            <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR!</button>
+        </div>
 
+    </div> 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
