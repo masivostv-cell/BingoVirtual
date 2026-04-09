@@ -224,7 +224,8 @@
     btnLogin.disabled = true;
 
     try {
-        const salaRef = doc(db, "salas", sala);
+        const salaLimpia = String(sala).trim();
+        const salaRef = doc(db, "salas", salaLimpia);
         const salaDoc = await getDoc(salaRef);
 
         if (salaDoc.exists()) {
@@ -282,7 +283,7 @@
             inicializarTablero75();
 
             // Guardar al jugador con su array de cartones
-            const jugadorRef = doc(db, "salas", sala, "jugadores", nombre);
+        const jugadorRef = doc(db, "salas", salaLimpia, "jugadores", nombre);
             await setDoc(jugadorRef, { nombre: nombre, cartones: numerosDeCartonesOficiales, conectadoEn: new Date() });
 
             window.ultimoGanadorVisto = 0; 
@@ -378,7 +379,8 @@
     
     btn.innerText = "ENVIANDO...";
     try {
-        const salaRef = doc(db, "salas", sala);
+        const salaLimpia = String(sala).trim();
+        const salaRef = doc(db, "salas", salaLimpia);
         const datosBingo = { nombre: nombre, carton: cartonGanadorId, timestamp: Date.now() };
         
         await updateDoc(salaRef, { alertaBingo: datosBingo });

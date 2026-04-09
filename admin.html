@@ -451,7 +451,8 @@
 
       try {
           if (window.db && window.firebaseTools) {
-              const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
+              const PIN_STRING = String(window.MI_CODIGO_SALA).trim();
+              const salaRef = window.firebaseTools.doc(window.db, "salas", PIN_STRING);
               await window.firebaseTools.setDoc(salaRef, {
                   ganadorConfirmado: {
                       nombre: nombreGanador.toUpperCase(),
