@@ -838,30 +838,34 @@
             window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
         }
 
-        // 🔥 CONTADOR DE JUGADORES (VERSIÓN A PRUEBA DE FALLOS) 🔥
-        try {
-            const pinSeguro = String(window.MI_CODIGO_SALA).trim();
-            console.log("📡 Iniciando radar de jugadores para la sala:", pinSeguro);
-            
+        // 🔥 CONTADOR DE JUGADORES (VERSIÓN QUE ESPERA A FIREBASE) 🔥
+        const iniciarContadorJugadores = () => {
+            // Si Firebase ya cargó, encendemos el radar
             if (window.db && window.firebaseTools && window.firebaseTools.collection) {
-                const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
-                
-                window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
-                    const totalJugadores = snapshot.size; 
-                    console.log("👥 Jugadores detectados en esta sala:", totalJugadores);
+                try {
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    console.log("📡 Firebase listo. Iniciando radar para la sala:", pinSeguro);
                     
-                    if(document.getElementById('display-jugadores')) {
-                        document.getElementById('display-jugadores').innerText = totalJugadores;
-                    }
-                }, (error) => {
-                    console.error("❌ Error de Firebase al leer jugadores:", error);
-                });
+                    const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
+                    
+                    window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
+                        const totalJugadores = snapshot.size; 
+                        console.log("👥 Jugadores detectados en esta sala:", totalJugadores);
+                        if(document.getElementById('display-jugadores')) {
+                            document.getElementById('display-jugadores').innerText = totalJugadores;
+                        }
+                    });
+                } catch (err) {
+                    console.error("❌ Fallo crítico al configurar el contador:", err);
+                }
             } else {
-                console.error("❌ Faltan las herramientas de Firebase (collection no importado).");
+                // Si Firebase no está listo, esperamos medio segundo y volvemos a preguntar
+                console.log("⏳ Esperando a que Firebase conecte...");
+                setTimeout(iniciarContadorJugadores, 500); 
             }
-        } catch (err) {
-            console.error("❌ Fallo crítico al configurar el contador:", err);
-        }
+        };
+        
+        iniciarContadorJugadores(); // Disparar la función
         
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {
