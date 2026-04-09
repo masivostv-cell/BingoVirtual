@@ -86,9 +86,55 @@
         .numero-carton.marcado { background-color: #ffeb3b; }
         .numero-carton.centro { background-color: #ccc; font-size: 20px; }
 
-        #btn-bingo { background-color: #d32f2f; color: white; border: 4px solid white; border-radius: 15px; font-size: 26px; font-weight: 900; padding: 15px; width: 100%; margin-top: 25px; cursor: pointer; box-shadow: 0 5px 15px rgba(211, 47, 47, 0.5); animation: latido 1.5s infinite; }
-        #btn-bingo:active { transform: scale(0.95); }
-        @keyframes latido { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        /* --- ESTILO BOTÓN FLOATING ACTION BINGO --- */
+        #container-btn-bingo {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000; /* Asegura que esté por encima de todo */
+        }
+
+        #btn-bingo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%; /* Lo hace redondo */
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Sombra para efecto flotante */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        #btn-bingo:hover {
+            background-color: #b71c1c;
+            transform: scale(1.05); /* Efecto al pasar el mouse */
+        }
+
+        #btn-bingo:disabled {
+            background-color: #9e9e9e;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Ajuste para móviles para no tapar la última balota */
+        @media (max-width: 600px) {
+            #container-btn-bingo {
+                bottom: 80px; /* Sube un poco más en móviles */
+                right: 15px;
+            }
+            #btn-bingo {
+                width: 65px;
+                height: 65px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -109,7 +155,8 @@
         <h2 style="color:#ffc107; margin-top:0;">Entrar a la Sala</h2>
         <input type="text" id="nombre-jugador" placeholder="Tu Nombre">
         <input type="number" id="codigo-sala" placeholder="PIN de la Sala (6 dígitos)" style="font-size: 18px; font-weight: bold; text-align: center;">
-        <input type="number" id="numero-carton" placeholder="N° de Cartón (Ej: 15)">
+        <input type="text" id="numero-carton" placeholder="N° de Cartones (Ej: 15 o 15,22,8)">
+
         <button onclick="entrarSala()">Ingresar al Juego</button>
     </div>
 
@@ -168,173 +215,174 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let miCartonNumeros = [];
-        let numCartonOficial = "";
+        let misCartonesData = []; // Guardará objetos: { id: "15", numeros: [...] }
+        let numerosDeCartonesOficiales = []; // Array con los IDs ingresados
         let balotasGlobales = [];
         let figuraGlobal = [];
 
         window.entrarSala = async () => {
-            const nombre = document.getElementById('nombre-jugador').value;
-            const sala = document.getElementById('codigo-sala').value.toUpperCase();
-            const numCarton = document.getElementById('numero-carton').value;
+    const nombre = document.getElementById('nombre-jugador').value;
+    const sala = document.getElementById('codigo-sala').value.toUpperCase();
+    const numCartonInput = document.getElementById('numero-carton').value;
 
-            if (!nombre || !sala || !numCarton) { alert("Llena todos los campos."); return; }
+    if (!nombre || !sala || !numCartonInput) { alert("Llena todos los campos."); return; }
 
-            const btnLogin = document.querySelector('#login-section button');
-            btnLogin.innerText = "Buscando cartón...";
-            btnLogin.disabled = true;
+    // Limpiar espacios y separar por comas
+    const numsRequeridos = numCartonInput.split(',').map(n => n.trim()).filter(n => n !== "");
 
-            try {
-                const salaRef = doc(db, "salas", sala);
-                const salaDoc = await getDoc(salaRef);
+    const btnLogin = document.querySelector('#login-section button');
+    btnLogin.innerText = "Buscando cartones...";
+    btnLogin.disabled = true;
 
-                if (salaDoc.exists()) {
-                    const datosSala = salaDoc.data();
-                    
-                    // --- NUEVA LÓGICA DE DESEMPAQUETADO ---
-                    let todosLosCartones = null;
+    try {
+        const salaRef = doc(db, "salas", sala);
+        const salaDoc = await getDoc(salaRef);
 
-                    // 1. Verificamos si los cartones vienen en el nuevo formato "empaquetado"
-                    if (datosSala.cartonesEmpaquetados) {
-                        try {
-                            todosLosCartones = JSON.parse(datosSala.cartonesEmpaquetados);
-                        } catch (e) {
-                            console.error("Error al desempaquetar cartones:", e);
-                        }
-                    } 
-                    // 2. Por si acaso, mantenemos compatibilidad con el formato viejo
-                    else if (datosSala.cartonesOficiales) {
-                        todosLosCartones = datosSala.cartonesOficiales;
-                    }
+        if (salaDoc.exists()) {
+            const datosSala = salaDoc.data();
+            let todosLosCartones = null;
 
-                    // 3. Si no hay cartones de ninguna forma, bloqueamos
-                    if (!todosLosCartones) {
-                        alert("El administrador aún no ha subido los cartones a esta sala.");
-                        btnLogin.innerText = "Ingresar al Juego";
-                        btnLogin.disabled = false;
-                        return;
-                    }
+            if (datosSala.cartonesEmpaquetados) {
+                try { todosLosCartones = JSON.parse(datosSala.cartonesEmpaquetados); } 
+                catch (e) { console.error("Error al desempaquetar:", e); }
+            } else if (datosSala.cartonesOficiales) {
+                todosLosCartones = datosSala.cartonesOficiales;
+            }
 
-                    // 4. Buscamos el cartón específico del jugador
-                    const cartonBuscado = todosLosCartones[numCarton];
-                    
-                    if (cartonBuscado) {
-                        miCartonNumeros = cartonBuscado;
-                        numCartonOficial = numCarton;
-
-                        // Cambios de UI
-                        document.getElementById('login-section').style.display = 'none';
-                        document.getElementById('encabezado-fijo').style.display = 'flex';
-                        document.getElementById('game-section').style.display = 'block';
-                        
-                        document.getElementById('display-sala').innerText = sala;
-                        document.getElementById('display-nombre').innerText = nombre;
-                        document.getElementById('display-num-carton').innerText = numCarton;
-                        if (window.videoEnvivoID) {
-                            document.getElementById('video-container').style.display = 'block';
-                            document.getElementById('video-envivo').src = `https://www.youtube.com/embed/${window.videoEnvivoID}?autoplay=1`;
-                        }
-                        renderizarCarton();
-                        inicializarTablero75();
-
-                        // Registro Firebase
-                        const jugadorRef = doc(db, "salas", sala, "jugadores", nombre);
-                        await setDoc(jugadorRef, { nombre: nombre, numeroCarton: numCarton, conectadoEn: new Date() });
-
-                        window.ultimoGanadorVisto = 0; 
-                        window.ultimoReinicioVisto = 0;
-
-                        // Escucha en tiempo real
-                        onSnapshot(salaRef, (docSnapshot) => {
-                            if (docSnapshot.exists()) {
-                                const datos = docSnapshot.data();
-                                
-                                // 1. Gatillo de Reinicio
-                                if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
-                                    window.ultimoReinicioVisto = datos.senalReinicio;
-                                    limpiarPantallaJugador();
-                                }
-
-                                // Reemplaza los pasos 2 y 3 del onSnapshot por esto:
-
-// 2. Actualizar Balotas
-if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
-    balotasGlobales = datos.balotasLlamadas; // <-- GUARDA EN MEMORIA
-    actualizarDatosBalotas(datos.balotasLlamadas);
-} else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
-    balotasGlobales = []; // <-- LIMPIA LA MEMORIA
-    limpiarPantallaJugador();
-}
-
-// 3. Actualizar Figura
-if (datos.figuraActual) {
-    figuraGlobal = datos.figuraActual; // <-- GUARDA EN MEMORIA
-    document.getElementById('nombre-figura-display').innerText = datos.nombreFigura || "BINGO";
-    renderizarFigura(datos.figuraActual);
-}
-
-                                // 4. Ganador
-                                if (datos.ganadorConfirmado) {
-                                    if (window.ultimoGanadorVisto !== datos.ganadorConfirmado.timestamp) {
-                                        window.ultimoGanadorVisto = datos.ganadorConfirmado.timestamp;
-                                        document.getElementById('texto-ganador').innerText = datos.ganadorConfirmado.nombre;
-                                        document.getElementById('texto-carton-ganador').innerText = datos.ganadorConfirmado.carton;
-                                        document.getElementById('pantalla-ganador').style.display = 'flex';
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        alert(`El Cartón #${numCarton} no existe en esta partida.`);
-                        btnLogin.innerText = "Ingresar al Juego";
-                        btnLogin.disabled = false;
-                    }
-                } else {
-                    alert("La sala no existe.");
-                    btnLogin.innerText = "Ingresar al Juego";
-                    btnLogin.disabled = false;
-                }
-            } catch (error) {
-                console.error("El error real es: ", error); // <- Agrega esta línea
-                alert("Error de conexión al buscar el cartón.");
+            if (!todosLosCartones) {
+                alert("El administrador aún no ha subido los cartones a esta sala.");
                 btnLogin.innerText = "Ingresar al Juego";
                 btnLogin.disabled = false;
+                return;
             }
-        };
+
+            // Validar que TODOS los cartones ingresados existan
+            misCartonesData = [];
+            let cartonesFaltantes = [];
+
+            for (let num of numsRequeridos) {
+                if (todosLosCartones[num]) {
+                    misCartonesData.push({ id: num, numeros: todosLosCartones[num] });
+                } else {
+                    cartonesFaltantes.push(num);
+                }
+            }
+
+            if (cartonesFaltantes.length > 0) {
+                alert(`Los siguientes cartones no existen en la sala: ${cartonesFaltantes.join(', ')}`);
+                btnLogin.innerText = "Ingresar al Juego";
+                btnLogin.disabled = false;
+                return;
+            }
+
+            // Si todos existen, avanzamos
+            numerosDeCartonesOficiales = numsRequeridos;
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('encabezado-fijo').style.display = 'flex';
+            document.getElementById('game-section').style.display = 'block';
+            
+            document.getElementById('display-sala').innerText = sala;
+            document.getElementById('display-nombre').innerText = nombre;
+            
+            if (window.videoEnvivoID) {
+                document.getElementById('video-container').style.display = 'block';
+                document.getElementById('video-envivo').src = `https://www.youtube.com/embed/${window.videoEnvivoID}?autoplay=1`;
+            }
+            
+            renderizarCartones();
+            inicializarTablero75();
+
+            // Guardar al jugador con su array de cartones
+            const jugadorRef = doc(db, "salas", sala, "jugadores", nombre);
+            await setDoc(jugadorRef, { nombre: nombre, cartones: numerosDeCartonesOficiales, conectadoEn: new Date() });
+
+            window.ultimoGanadorVisto = 0; 
+            window.ultimoReinicioVisto = 0;
+
+            onSnapshot(salaRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const datos = docSnapshot.data();
+                    
+                    if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
+                        window.ultimoReinicioVisto = datos.senalReinicio;
+                        limpiarPantallaJugador();
+                    }
+
+                    if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
+                        balotasGlobales = datos.balotasLlamadas;
+                        actualizarDatosBalotas(datos.balotasLlamadas);
+                    } else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
+                        balotasGlobales = [];
+                        limpiarPantallaJugador();
+                    }
+
+                    if (datos.figuraActual) {
+                        figuraGlobal = datos.figuraActual;
+                        document.getElementById('nombre-figura-display').innerText = datos.nombreFigura || "BINGO";
+                        renderizarFigura(datos.figuraActual);
+                    }
+
+                    if (datos.ganadorConfirmado) {
+                        if (window.ultimoGanadorVisto !== datos.ganadorConfirmado.timestamp) {
+                            window.ultimoGanadorVisto = datos.ganadorConfirmado.timestamp;
+                            document.getElementById('texto-ganador').innerText = datos.ganadorConfirmado.nombre;
+                            document.getElementById('texto-carton-ganador').innerText = datos.ganadorConfirmado.carton;
+                            document.getElementById('pantalla-ganador').style.display = 'flex';
+                        }
+                    }
+                }
+            });
+        } else {
+            alert("La sala no existe.");
+            btnLogin.innerText = "Ingresar al Juego";
+            btnLogin.disabled = false;
+        }
+    } catch (error) {
+        console.error("Error: ", error);
+        alert("Error de conexión al buscar los cartones.");
+        btnLogin.innerText = "Ingresar al Juego";
+        btnLogin.disabled = false;
+    }
+};
+
+
 
         window.toggleMarca = (elemento) => { elemento.classList.toggle('marcado'); };
 
         window.cantarBingo = async () => {
-    // --- NUEVA VALIDACIÓN LOCAL DE BINGO ---
     if (!figuraGlobal || figuraGlobal.length !== 25) {
         alert("Aún no hay una figura válida configurada en la sala.");
         return;
     }
 
-    // Este mapeo traduce la cuadricula visual 5x5 a tu array de datos
     const mapeoCarton = [0,5,10,15,20, 1,6,11,16,21, 2,7,12,17,22, 3,8,13,18,23, 4,9,14,19,24];
-    let bingoValido = true;
+    let cartonesGanadores = []; // Podemos tener más de uno que gane a la vez
 
-    for (let i = 0; i < 25; i++) {
-        // Si la celda es parte de la figura que exige el administrador...
-        if (figuraGlobal[i]) { 
-            let numeroEnCarton = miCartonNumeros[mapeoCarton[i]];
-            
-            // Verificamos si NO es el centro (0) y si la balota NO ha salido
-            if (numeroEnCarton !== 0 && !balotasGlobales.includes(numeroEnCarton)) {
-                bingoValido = false;
-                break; // Cortamos el ciclo apenas le falte un número
+    // Revisar cada cartón del jugador
+    for (let carton of misCartonesData) {
+        let bingoValido = true;
+        for (let i = 0; i < 25; i++) {
+            if (figuraGlobal[i]) { 
+                let numeroEnCarton = carton.numeros[mapeoCarton[i]];
+                if (numeroEnCarton !== 0 && !balotasGlobales.includes(numeroEnCarton)) {
+                    bingoValido = false;
+                    break;
+                }
             }
+        }
+        if (bingoValido) {
+            cartonesGanadores.push(carton.id); // Si pasó la prueba, lo guardamos
         }
     }
 
-    if (!bingoValido) {
-        alert("¡FALSA ALARMA! Todavía te faltan números para completar la figura.");
-        return; // Termina la ejecución aquí, NO envía nada al administrador
+    if (cartonesGanadores.length === 0) {
+        alert("¡FALSA ALARMA! Todavía te faltan números para completar la figura en tus cartones.");
+        return; 
     }
-    // --- FIN VALIDACIÓN LOCAL ---
 
-    // Agregamos .trim() para evitar que espacios en blanco dañen la ruta en Firebase
+    // Tomamos el primer cartón ganador de la lista (en caso de que más de uno gane)
+    const cartonGanadorId = cartonesGanadores[0];
+
     const nombre = document.getElementById('display-nombre').innerText.trim();
     const sala = document.getElementById('display-sala').innerText.trim();
     const btn = document.getElementById('btn-bingo');
@@ -342,25 +390,21 @@ if (datos.figuraActual) {
     btn.innerText = "ENVIANDO...";
     try {
         const salaRef = doc(db, "salas", sala);
-        const datosBingo = { nombre: nombre, carton: numCartonOficial, timestamp: Date.now() };
+        const datosBingo = { nombre: nombre, carton: cartonGanadorId, timestamp: Date.now() };
         
-        // Esto te permitirá ver en la consola (F12) exactamente qué se está enviando
-        console.log("Enviando Bingo a la sala:", sala, "Datos:", datosBingo);
-
-        await updateDoc(salaRef, {
-            alertaBingo: datosBingo
-        });
+        await updateDoc(salaRef, { alertaBingo: datosBingo });
         
         btn.innerText = "¡BINGO ENVIADO!";
         btn.style.backgroundColor = "#28a745"; 
-        alert(`¡Validación exitosa! Has cantado BINGO con el Cartón #${numCartonOficial}.`);
-        setTimeout(() => { btn.innerText = "¡BINGO!"; btn.style.backgroundColor = "#d32f2f"; }, 5000);
+        alert(`¡Validación exitosa! Has cantado BINGO con el Cartón #${cartonGanadorId}.`);
+        setTimeout(() => { btn.innerText = "¡CANTAR BINGO!"; btn.style.backgroundColor = "#d32f2f"; }, 5000);
     } catch (error) {
-        console.error("Error exacto al enviar el Bingo a Firebase:", error);
-        alert("Error al cantar Bingo. Revisa la consola (F12) para ver el motivo.");
-        btn.innerText = "¡BINGO!";
+        console.error("Error al enviar el Bingo:", error);
+        alert("Error al cantar Bingo. Revisa la conexión.");
+        btn.innerText = "¡CANTAR BINGO!";
     }
 };
+
 
         function limpiarPantallaJugador() {
             document.getElementById('main-letra').innerText = "-";
@@ -391,19 +435,37 @@ if (datos.figuraActual) {
             actualizarTablero75(balotas);
         }
 
-        function renderizarCarton() {
-            const container = document.getElementById('mi-carton');
-            let html = '<div class="carton-container">';
-            ['B', 'I', 'N', 'G', 'O'].forEach(l => html += `<div class="letra-bingo">${l}</div>`);
-            
-            const mapeoCarton = [0,5,10,15,20, 1,6,11,16,21, 2,7,12,17,22, 3,8,13,18,23, 4,9,14,19,24];
-            mapeoCarton.forEach((idx) => {
-                let num = miCartonNumeros[idx];
-                if (num === 0) html += `<div class="numero-carton centro marcado">X</div>`;
-                else html += `<div class="numero-carton" onclick="toggleMarca(this)">${num}</div>`;
-            });
-            container.innerHTML = html + '</div>';
-        }
+        function renderizarCartones() {
+    const mainContainer = document.getElementById('mi-carton');
+    mainContainer.innerHTML = ''; // Limpiar contenedor
+    
+    // Configurar layout para que quepan bien si hay varios
+    mainContainer.style.display = 'flex';
+    mainContainer.style.flexDirection = 'column';
+    mainContainer.style.gap = '30px';
+    mainContainer.style.alignItems = 'center';
+
+    misCartonesData.forEach((cartonObj) => {
+        let html = `<div style="width: 100%;">`;
+        // Título individual para cada cartón
+        html += `<h3 style="margin: 0 0 10px 0; color: #ffc107; font-size: 24px; text-align: center;">CARTÓN #${cartonObj.id}</h3>`;
+        html += `<div class="carton-container">`;
+        
+        ['B', 'I', 'N', 'G', 'O'].forEach(l => html += `<div class="letra-bingo">${l}</div>`);
+        
+        const mapeoCarton = [0,5,10,15,20, 1,6,11,16,21, 2,7,12,17,22, 3,8,13,18,23, 4,9,14,19,24];
+        mapeoCarton.forEach((idx) => {
+            let num = cartonObj.numeros[idx];
+            if (num === 0) html += `<div class="numero-carton centro marcado">X</div>`;
+            else html += `<div class="numero-carton" onclick="toggleMarca(this)">${num}</div>`;
+        });
+        
+        html += `</div></div>`;
+        mainContainer.innerHTML += html;
+    });
+}
+
+
 
         function renderizarFigura(figuraArray) {
              const container = document.getElementById('figura-objetivo');
