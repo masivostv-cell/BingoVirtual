@@ -154,6 +154,45 @@
         }
 
         @keyframes pulso { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        /* ========================================================
+           ADAPTACIÓN RESPONSIVA PARA TELÉFONOS (MOBILE VIEW)
+           ======================================================== */
+        @media (max-width: 768px) {
+            #pantalla-principal { height: auto; min-height: 100vh; padding: 5px; }
+            .header-bingo { height: auto; flex-direction: column; padding: 10px; gap: 10px; }
+            .media-zone { display: none; } /* Ocultar media zones para ahorrar espacio */
+            .game-center-panel { flex-direction: column; width: 100%; gap: 10px; }
+            
+            /* Ajustes Balota Principal */
+            .balota-grande { width: 120px; height: 120px; border-width: 4px; }
+            .balota-grande .numero-balota { font-size: 60px; }
+            #main-letra { font-size: 20px !important; }
+            .bola-historial { width: 35px; height: 35px; font-size: 16px; }
+
+            /* Controles Móviles (Botones Extra) */
+            #mobile-controls { display: flex !important; }
+
+            /* Ajustes del Tablero para encajar en el celular */
+            #tablero-maestro { gap: 4px; margin-bottom: 15px; }
+            .fila-bingo { gap: 3px; }
+            .letra-circulo { width: 30px; height: 30px; font-size: 20px; border-width: 2px; }
+            .numeros-grid { gap: 2px; }
+            .bola-mini { height: 35px; font-size: 15px; border-radius: 4px; border-width: 1px; }
+
+            /* Intercambio de Posición del Status (Banners) */
+            #desktop-status-container { display: none !important; }
+            #mobile-status-container { display: flex !important; }
+            
+            /* Tamaños de Texto Adaptados para los Banners en Móvil */
+            #status-sala-banner { font-size: 14px !important; padding: 6px 10px !important; }
+            #display-jugadores { font-size: 18px !important; }
+            #display-codigo-sala { font-size: 18px !important; }
+            #contador-balotas { font-size: 45px !important; }
+
+            .admin-zone { padding: 15px 10px; }
+            .admin-btn { padding: 12px 15px; font-size: 14px !important; }
+        }
     </style>
 </head>
 <body>
@@ -204,28 +243,36 @@
                     <div id="historial-4" class="historial-balotas">
                         <div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div>
                     </div>
+                    
+                    <div id="mobile-controls" style="display:none; justify-content:center; gap:10px; margin-top:15px; width:100%;">
+                        <button onclick="sacarBalota()" style="background:#28a745; color:white; border:none; padding:8px 20px; border-radius:5px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.3); cursor:pointer;">CANTAR (↓)</button>
+                        <button id="btn-auto-mobile" onclick="toggleAutomatico()" style="background:#007bff; color:white; border:none; padding:8px 20px; border-radius:5px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.3); cursor:pointer;">AUTO (↑)</button>
+                    </div>
                 </div>
 
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    
-                    <div id="status-sala-banner" style="background: #dc3545; color: white; padding: 8px 20px; border-radius: 8px; font-weight: 900; font-size: 2.2vh; margin-bottom: 8px; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.3); width: 100%; text-align: center;">
-                        ⚠️ SALA CERRADA: para jugar por favor dale ABRIR
-                    </div>
+                <div id="desktop-status-container" style="display:flex; flex-direction:column; align-items:center;">
+                    <div id="status-panel-content" style="display:flex; flex-direction:column; align-items:center; width: 100%;">
+                        <div id="status-sala-banner" style="background: #dc3545; color: white; padding: 8px 20px; border-radius: 8px; font-weight: 900; font-size: 2.2vh; margin-bottom: 8px; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.3); width: 100%; text-align: center;">
+                            ⚠️ SALA CERRADA: para jugar por favor dale ABRIR
+                        </div>
 
-                    <div style="background: #28a745; color: white; padding: 3px 15px; border-radius: 8px; font-weight: bold; font-size: 2vh; margin-bottom: 5px; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                        👥 JUGADORES: <span id="display-jugadores" style="color:#ffeb3b; font-size: 2.5vh; font-weight: 900;">0</span>
-                    </div>
+                        <div style="background: #28a745; color: white; padding: 3px 15px; border-radius: 8px; font-weight: bold; font-size: 2vh; margin-bottom: 5px; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            👥 JUGADORES: <span id="display-jugadores" style="color:#ffeb3b; font-size: 2.5vh; font-weight: 900;">0</span>
+                        </div>
 
-                    <div style="background: #004080; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                        SALA: <span id="display-codigo-sala" style="color:#ffc107; letter-spacing: 2px;">---</span>
+                        <div style="background: #004080; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                            SALA: <span id="display-codigo-sala" style="color:#ffc107; letter-spacing: 2px;">---</span>
+                        </div>
+                        <div id="contador-balotas" style="font-size:8vh; font-weight:900; color:#d32f2f; line-height: 0.9;">0/75</div>
                     </div>
-                    <div id="contador-balotas" style="font-size:8vh; font-weight:900; color:#d32f2f; line-height: 0.9;">0/75</div>
                 </div>
             </div> <div id="media-right" class="media-zone"></div>
         </div> <div id="tablero-maestro"></div>
     </div>
 
     <div class="admin-zone">
+        <div id="mobile-status-container" style="display:none; flex-direction:column; align-items:center; width:100%; margin-bottom: 15px;"></div>
+
         <button id="btn-activar-voz" onclick="permitirSonido()" style="background:#ffc107; color:#000; border:3px solid #000; padding:15px; font-weight:900; cursor:pointer; width:100%; max-width:800px; border-radius:10px; margin:0 auto 10px; font-size:18px; display:block;">🔊 ACTIVAR SONIDO</button>
         
         <button onclick="toggleFullScreen()" style="background:#17a2b8; color:#fff; border:3px solid #fff; padding:15px; font-weight:900; cursor:pointer; width:100%; max-width:800px; border-radius:10px; margin:0 auto 20px; font-size:18px; display:block;">🖥️ PANTALLA COMPLETA</button>
@@ -406,56 +453,45 @@
   const app = initializeApp(firebaseConfig);
   window.db = getFirestore(app);
   
-  // Guardamos las herramientas y agregamos onSnapshot
   window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
-// 🔥 NUEVO RADAR DE BINGOS CANTADOS Y ESTADO DE SALA 🔥
   window.iniciarRadarDeBingos = (pinDeLaSalaActual) => {
       let ultimoBingoVisto = Date.now(); 
       const salaRefRadar = doc(window.db, "salas", pinDeLaSalaActual);
 
-      // Escuchamos la sala correcta en tiempo real
       onSnapshot(salaRefRadar, (documento) => {
           if(documento.exists()) {
               const datos = documento.data();
               
-              // 🔥 NUEVO: ACTUALIZAR EL BANNER DE ESTADO VISUAL 🔥
               const banner = document.getElementById('status-sala-banner');
               if(banner) {
                   if(datos.estadoSala === "abierta") {
                       banner.innerText = "✅ SALA ABIERTA Y FUNCIONANDO";
-                      banner.style.background = "#28a745"; // Verde
+                      banner.style.background = "#28a745"; 
                   } else {
                       banner.innerText = "⚠️ SALA CERRADA: para jugar por favor dale ABRIR";
-                      banner.style.background = "#dc3545"; // Rojo
+                      banner.style.background = "#dc3545"; 
                   }
               }
 
-              // Lógica original de alertas de Bingo
               if(datos.alertaBingo && datos.alertaBingo.timestamp > ultimoBingoVisto) {
                   ultimoBingoVisto = datos.alertaBingo.timestamp;
                   
-                  // 1. Llenamos automáticamente el cuadro de texto del administrador
                   const inputRevision = document.getElementById('num-revisar');
                   if(inputRevision) inputRevision.value = datos.alertaBingo.carton;
 
-                  // 2. Disparamos la alerta en pantalla
                   alert(`🚨 ¡ATENCIÓN: BINGO CANTADO! 🚨\n\nEl jugador "${datos.alertaBingo.nombre.toUpperCase()}" acaba de cantar BINGO con el CARTÓN #${datos.alertaBingo.carton}.\n\nEl número ya se puso en tu verificador, solo haz clic en "1. VERIFICAR".`);
               }
           }
       });
   };
   
-  // 🔥 NUEVO: AUTO-ARRANQUE DEL RADAR 🔥
-  // Si entramos tan rápido que el radar no se encendió, lo encendemos ahora:
   if (window.MI_CODIGO_SALA) {
       window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
   }
  
-     // 🔥 FUNCIÓN PARA ANUNCIAR AL GANADOR (ESTA ES LA QUE USA EL BOTÓN 2) 🔥
   window.anunciarGanadorOficial = async (numeroDesdeCarton) => {
-      // Si viene de la ventana emergente usa ese número, si no, lo lee del cuadro de texto
       let n = numeroDesdeCarton || document.getElementById('num-revisar').value;
       
       if(!n) {
@@ -463,7 +499,6 @@
           return;
       }
       
-      // Pedimos el nombre (Esto es lo que el botón 2 hace y ahora el cartón también)
       let nombreGanador = prompt(`🏆 GANADOR DEL CARTÓN #${n}\n\nEscribe el nombre del ganador:`);
       if(!nombreGanador) return;
 
@@ -490,12 +525,10 @@
 </script>
 
 <script>
-    // --- VARIABLES DE SEGURIDAD ---
     let SISTEMA_AUTORIZADO = false; 
     const URL_HOJA_EXCEL = "https://script.google.com/macros/s/AKfycbyL2FoyRBQ4sECi_uMXqL1WG3gnSQFXw2pI6NXNqZwJlk3_gBdH_kdGlG2_QVFtI6vc/exec"; 
     const LOCAL_STORAGE_KEY = 'bingoSala2_V15_MASTER';
 
-    // --- DICCIONARIO DE FIGURAS PRECARGADAS ---
     const PRESET_FIGURAS = {
         "PLENO": [1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1],
         "CUATRO ESQUINAS": [1,0,0,0,1, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 1,0,0,0,1],
@@ -528,7 +561,6 @@
         "NUMERO 8": [0,1,1,1,0, 1,0,0,0,1, 0,1,1,1,0, 1,0,0,0,1, 0,1,1,1,0]
     };
 
-    // VERIFICADOR DE SEGURIDAD INTERNO
     const checkSecurity = () => {
         if (!SISTEMA_AUTORIZADO) {
             alert("⛔ ACCESO DENEGADO: Debe iniciar sesión correctamente o su sesión ha caducado.");
@@ -538,7 +570,6 @@
         return true;
     };
 
-    // ESTRUCTURA DE DATOS
     let dbLocal = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || { 
         juego: [], 
         config: { figura: new Array(25).fill(false), nombre: "---", autoWin: false }, 
@@ -549,7 +580,6 @@
         centerLogoBase64: null 
     };
 
-    // LIMPIEZA DE RAM DE MEDIOS AL RECARGAR
     if(dbLocal.media || dbLocal.headerCartonBase64 || dbLocal.centerLogoBase64) {
         dbLocal.media = { left: null, right: null };
         dbLocal.headerCartonBase64 = null;
@@ -557,19 +587,15 @@
         try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dbLocal)); } catch(e){}
     }
 
-    // CHECKEO DE LOGIN PREVIO (Usando los milisegundos reales)
     if(localStorage.getItem('bingo_offline_token') === 'active') { 
         const milisegundosGuardados = localStorage.getItem('bingo_vencimiento_ms');
         if(milisegundosGuardados) {
             const limitDateMs = parseInt(milisegundosGuardados);
             const nowMs = new Date().getTime();
-            
-            // Si el tiempo actual es menor a la fecha límite matemática, pasa.
             if (limitDateMs > nowMs) {
                 SISTEMA_AUTORIZADO = true; 
                 mostrarBingo(); 
             } else {
-                // SOLUCIÓN: Agregamos la alerta y la recarga de la página para emular el cierre manual
                 alert("⏰ TU TIEMPO DE ACCESO HA EXPIRADO.\nEl sistema ha cerrado tu sesión automáticamente.");
                 localStorage.removeItem('bingo_offline_token');
                 localStorage.removeItem('bingo_vencimiento_ms');
@@ -577,7 +603,6 @@
                 location.reload(); 
             }
         } else {
-            // Compatibilidad por si acaso
             SISTEMA_AUTORIZADO = true;
             mostrarBingo();
         }
@@ -590,7 +615,6 @@
             copiaParaGuardar.headerCartonBase64 = null;
             copiaParaGuardar.centerLogoBase64 = null;
             copiaParaGuardar.media = { left: null, right: null };
-
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(copiaParaGuardar));
             renderizar();
         } catch (e) {
@@ -710,11 +734,9 @@
                 if(!importedData.juego && !importedData.serialesExtra) throw new Error("Formato inválido");
                 if(!importedData.colores) importedData.colores = { tablero: "#f8f9fa", balotas: "#e9ecef", cartonExport: "#004080", cartonFondo: "#002b5c" };
                 if(!importedData.media) importedData.media = { left: null, right: null };
-                
                 importedData.headerCartonBase64 = null;
                 importedData.centerLogoBase64 = null;
                 importedData.media = { left: null, right: null };
-
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(importedData));
                 alert("✅ Respaldo restaurado con éxito. La página se recargará.");
                 location.reload();
@@ -750,25 +772,20 @@
                     return;
                 }
 
-                // NUEVA LOGICA DE CONVERSIÓN DE FECHA SÚPER SEGURA
                 let fLimpia = fechaLimiteStr.trim().replace(/\//g, '-');
                 let dateObj = new Date(fLimpia);
                 
-                // Si el formato es solo fecha corta, forzamos el vencimiento al final del día
                 if(fLimpia.length <= 10 && fLimpia.includes("-")) {
                     let partes = fLimpia.split('-');
-                    // Si el formato viene como DD-MM-YYYY lo volteamos a YYYY-MM-DD para evitar errores
                     if(partes[2].length === 4) {
                         fLimpia = `${partes[2]}-${partes[1]}-${partes[0]}`;
                     }
-                    // Forzamos el vencimiento hasta las 23:59:59 de ese día exacto
                     dateObj = new Date(`${fLimpia}T23:59:59`);
                 }
 
                 const limitDateMs = dateObj.getTime();
                 const nowMs = new Date().getTime();
 
-                // Revisamos si la fecha calculada falló ("Invalid Date")
                 if (isNaN(limitDateMs)) {
                     errorMsg.innerText = "ERROR LEYENDO LA FECHA: Comunícate con soporte.";
                     errorMsg.style.display = 'block';
@@ -776,16 +793,13 @@
                     return;
                 }
 
-                // CONDICIÓN: Comparamos directamente los números (milisegundos)
                 if (limitDateMs > nowMs) {
                     SISTEMA_AUTORIZADO = true;
                     localStorage.setItem('bingo_offline_token', 'active');
-                    // GUARDAMOS LOS MILISEGUNDOS, NUNCA FALLARÁ.
                     localStorage.setItem('bingo_vencimiento_ms', limitDateMs.toString());
                     localStorage.setItem('bingo_user', user); 
                     mostrarBingo();
                 } else {
-                    // Y mostramos el error limpio sin la chorrera de texto
                     errorMsg.innerText = "ACCESO DENEGADO: Su fecha de expiración (" + dateObj.toLocaleDateString() + ") ya se cumplió.";
                     errorMsg.style.display = 'block';
                     btn.innerText = "INICIAR SESIÓN";
@@ -832,11 +846,9 @@
     function iniciarAppBingo() {
         if(!SISTEMA_AUTORIZADO) return; 
 
-        // Mostrar el usuario activo
         const usuarioActivo = localStorage.getItem('bingo_user') || "Desconocido";
         document.getElementById('lbl-usuario').innerText = usuarioActivo.toUpperCase();
 
-        // 🔥 Convertir el nombre en un PIN fijo de 6 dígitos 🔥
         const generarCodigoUnico = (nombre) => {
             let hash = 0;
             for (let i = 0; i < nombre.length; i++) {
@@ -846,31 +858,23 @@
             return (Math.abs(hash) % 900000) + 100000; 
         };
 
-        // ESTABLECER EL PIN ÚNICO (Y NO TOCARLO MÁS)
         window.MI_CODIGO_SALA = generarCodigoUnico(usuarioActivo.toUpperCase()).toString();
         
-        // Mostrar el PIN en las pantallas del administrador
         if(document.getElementById('lbl-mi-sala')) document.getElementById('lbl-mi-sala').innerText = window.MI_CODIGO_SALA;
         if(document.getElementById('display-codigo-sala')) document.getElementById('display-codigo-sala').innerText = window.MI_CODIGO_SALA;
 
-        // 🔥 ENCENDER EL RADAR CON EL PIN CORRECTO 🔥
         if (window.iniciarRadarDeBingos) {
             window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
         }
 
-        // 🔥 CONTADOR DE JUGADORES (VERSIÓN QUE ESPERA A FIREBASE) 🔥
         const iniciarContadorJugadores = () => {
-            // Si Firebase ya cargó, encendemos el radar
             if (window.db && window.firebaseTools && window.firebaseTools.collection) {
                 try {
                     const pinSeguro = String(window.MI_CODIGO_SALA).trim();
-                    console.log("📡 Firebase listo. Iniciando radar para la sala:", pinSeguro);
-                    
                     const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
                     
                     window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
                         const totalJugadores = snapshot.size; 
-                        console.log("👥 Jugadores detectados en esta sala:", totalJugadores);
                         if(document.getElementById('display-jugadores')) {
                             document.getElementById('display-jugadores').innerText = totalJugadores;
                         }
@@ -879,23 +883,17 @@
                     console.error("❌ Fallo crítico al configurar el contador:", err);
                 }
             } else {
-                // Si Firebase no está listo, esperamos medio segundo y volvemos a preguntar
-                console.log("⏳ Esperando a que Firebase conecte...");
                 setTimeout(iniciarContadorJugadores, 500); 
             }
         };
         
-        iniciarContadorJugadores(); // Disparar la función
+        iniciarContadorJugadores(); 
         
-        // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {
             const ahora = new Date();
-            
-            // Reloj Visual
             document.getElementById('fecha-pc').innerText = ahora.toLocaleDateString();
             document.getElementById('hora-pc').innerText = ahora.toLocaleTimeString();
 
-            // Cálculos del tiempo restante basados 100% en los milisegundos guardados
             const milisegundosGuardados = localStorage.getItem('bingo_vencimiento_ms');
             
             if (milisegundosGuardados && SISTEMA_AUTORIZADO) {
@@ -903,30 +901,24 @@
                 const nowMs = ahora.getTime();
                 const diferencia = limitDateMs - nowMs;
 
-                // SI EL TIEMPO LLEGA A 0 O NEGATIVO -> EXPULSIÓN INMEDIATA
                 if (diferencia <= 0) {
                     SISTEMA_AUTORIZADO = false;
                     alert("⏰ TU TIEMPO DE ACCESO HA EXPIRADO.\nEl sistema procederá a cerrar la sesión automáticamente.");
-                    
                     localStorage.removeItem('bingo_offline_token');
                     localStorage.removeItem('bingo_vencimiento_ms');
                     localStorage.removeItem('bingo_user');
                     location.reload();
                 } else {
-                    // Convertir la diferencia en días, horas, minutos y segundos (oculto visualmente)
                     let dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
                     let horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     let minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
                     let segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
                     
                     let lblTiempo = document.getElementById('lbl-tiempo');
-                    lblTiempo.innerText = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
-                    
-                    // Alerta de color si queda menos de un día
-                    if (dias === 0) {
-                        lblTiempo.style.color = "#dc3545"; 
-                    } else {
-                        lblTiempo.style.color = "#28a745"; 
+                    if(lblTiempo) {
+                        lblTiempo.innerText = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+                        if (dias === 0) { lblTiempo.style.color = "#dc3545"; } 
+                        else { lblTiempo.style.color = "#28a745"; }
                     }
                 }
             }
@@ -1155,22 +1147,17 @@
             try {
                 if (window.db && window.firebaseTools) {
                     const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
-                    
-                    // 1. Agrupamos todos los cartones
                     let cartonesCompactos = {};
                     serialActivo.lista.forEach(c => {
                         cartonesCompactos[c.carton.toString()] = c.numeros;
                     });
                     
-                    // 2. EL TRUCO MAGICO: Convertimos la lista inmensa en un solo texto.
-                    // Esto pesa poquísimo y burla el límite de 40,000 índices de Firebase.
                     const paqueteTexto = JSON.stringify(cartonesCompactos);
 
                     if(btn) btn.innerText = "SUBIENDO RÁPIDO...";
 
-                    // 3. Subimos todo de un solo golpe
                     await window.firebaseTools.setDoc(salaRef, {
-                        cartonesEmpaquetados: paqueteTexto, // Lo guardamos con un nuevo nombre
+                        cartonesEmpaquetados: paqueteTexto, 
                         nombreSerial: serialActivo.nombre,
                         pinSala: window.MI_CODIGO_SALA,
                         estado: "activo"
@@ -1208,7 +1195,6 @@
             guardarDatos();
             if(timerAuto) resetReloj();
 
-            // 🔥 NUEVO: Enviar la balota a la SALA-001 en Firebase
             try {
                 if (window.db && window.firebaseTools) {
                     const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
@@ -1217,7 +1203,7 @@
                     });
                 }
             } catch (error) {
-                console.error("No se pudo enviar la balota a internet. Revisa las reglas de Firestore.", error);
+                console.error("No se pudo enviar la balota a internet.", error);
             }
         };
 
@@ -1288,7 +1274,6 @@
 
         window.toggleAutoWin = (val) => { if(!checkSecurity()) return; dbLocal.config.autoWin = val; guardarDatos(); };
         
-        // 🔥 NUEVA LÓGICA: ABRIR SALA 🔥
         window.abrirSala = async () => { 
             if(!checkSecurity()) return;
             if(!confirm("🟢 ¿Deseas ABRIR la sala? A partir de ahora los jugadores podrán ingresar.")) return;
@@ -1307,7 +1292,6 @@
             }
         };
 
-        // 🔥 NUEVA LÓGICA: CERRAR SALA Y EXPULSAR 🔥
         window.cerrarSala = async () => { 
             if(!checkSecurity()) return;
             if(!confirm("🔴 ¿Estás seguro de CERRAR la sala?\n\nEsto expulsará a todos los jugadores inmediatamente y reiniciará el tablero.")) return;
@@ -1316,22 +1300,19 @@
                 if (window.db && window.firebaseTools) {
                     const pinSeguro = String(window.MI_CODIGO_SALA).trim();
                     
-                    // 1. Mandar la señal de expulsión y cambiar estado a "cerrada"
                     const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
                     await window.firebaseTools.setDoc(salaRef, {
                         estadoSala: "cerrada",
-                        senalExpulsion: Date.now(), // El gatillo que saca a todos
+                        senalExpulsion: Date.now(),
                         balotasLlamadas: [], 
                         ganadorConfirmado: null, 
                         alertaBingo: null
                     }, { merge: true });
 
-                    // 2. Pasar la "escoba" por la base de datos por si alguien cerró mal su navegador
                     const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
                     const snapshot = await window.firebaseTools.getDocs(jugadoresRef);
                     snapshot.forEach((docSnap) => { window.firebaseTools.deleteDoc(docSnap.ref); });
 
-                    // 3. Limpiar tu pantalla de PC
                     dbLocal.juego = []; 
                     if(document.getElementById('timer-auto-container')) document.getElementById('timer-auto-container').style.display = 'none';
                     guardarDatos(); 
@@ -1343,7 +1324,6 @@
             }
         };
 
-        // 🔥 NUEVA LÓGICA: REINICIAR SOLO EL TABLERO (NUEVA PARTIDA) 🔥
         window.REINICIAR_JUEGO = async () => { 
             if(!checkSecurity()) return;
             if(!confirm("🔄 ¿Estás seguro de iniciar una NUEVA PARTIDA?\n\nEsto limpiará los números de tu pantalla y de los celulares de los jugadores, pero NO los expulsará de la sala.")) return;
@@ -1355,6 +1335,7 @@
             timerAuto = null;
             if(document.getElementById('timer-auto-container')) document.getElementById('timer-auto-container').style.display = 'none';
             if(document.getElementById('btn-auto')) document.getElementById('btn-auto').innerText = "AUTO (↑)";
+            if(document.getElementById('btn-auto-mobile')) document.getElementById('btn-auto-mobile').innerText = "AUTO (↑)";
             guardarDatos(); 
             renderizar();
 
@@ -1363,12 +1344,11 @@
                     const pinSeguro = String(window.MI_CODIGO_SALA).trim();
                     const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
                     
-                    // Solo limpiamos los datos del juego, pero NO tocamos el "estadoSala"
                     await window.firebaseTools.setDoc(salaRef, {
                         balotasLlamadas: [], 
                         ganadorConfirmado: null, 
                         alertaBingo: null,
-                        senalReinicio: Date.now() // Esta es la señal suave
+                        senalReinicio: Date.now() 
                     }, { merge: true });
                 }
             } catch (error) {
@@ -1376,9 +1356,6 @@
             }
         };
 
-     
-
-        // --- LÓGICA DEL NUEVO MODAL DE FIGURAS ---
         window.abrirConfig = () => {
             if(!checkSecurity()) return;
             document.getElementById('modal-config').style.display = "block";
@@ -1394,8 +1371,6 @@
                     s.onclick = function() { 
                         figTemporal[i] = !figTemporal[i]; 
                         this.classList.toggle('seleccionada'); 
-                        
-                        // Si el usuario edita la cuadrícula manualmente, cambiar a "Personalizada"
                         presetSelect.value = "PERSONALIZADA";
                     };
                     sel.appendChild(s);
@@ -1418,7 +1393,6 @@
                 document.getElementById('modal-config').style.display = 'none';
                 guardarDatos();
 
-                // 🔥 NUEVO: Avisar a los jugadores de la nueva figura
                 try {
                     if (window.db && window.firebaseTools) {
                         const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
@@ -1432,7 +1406,6 @@
 
             renderGrid();
 
-            // Identificar si la figura actual es un preset para seleccionarlo en la lista
             let match = "PERSONALIZADA";
             for(let key in PRESET_FIGURAS) {
                 if(PRESET_FIGURAS[key].every((v, i) => (v === 1) === figTemporal[i])) {
@@ -1449,7 +1422,6 @@
             let c = cartonesActuales.find(x => x.carton == n);
             if(!c) return alert("No existe en el serial activo.");
 
-            // Ventana más pequeña solo para ver el cartón
             const winR = window.open("", "R", "width=440,height=600");
             
             let contenidoHTML = `
@@ -1525,8 +1497,19 @@
             if(!checkSecurity()) return;
             const clock = document.getElementById('timer-auto-container');
             const btn = document.getElementById('btn-auto');
-            if(timerAuto) { clearInterval(timerAuto); timerAuto = null; clearInterval(timerVisual); clock.style.display="none"; btn.innerText="AUTO (↑)"; } 
-            else { timerAuto = setInterval(window.sacarBalota, 6000); clock.style.display="block"; btn.innerText="PARAR (↑)"; resetReloj(); }
+            const btnMobile = document.getElementById('btn-auto-mobile');
+            if(timerAuto) { 
+                clearInterval(timerAuto); timerAuto = null; clearInterval(timerVisual); 
+                clock.style.display="none"; 
+                btn.innerText="AUTO (↑)"; 
+                if(btnMobile) btnMobile.innerText="AUTO (↑)";
+            } else { 
+                timerAuto = setInterval(window.sacarBalota, 6000); 
+                clock.style.display="block"; 
+                btn.innerText="PARAR (↑)"; 
+                if(btnMobile) btnMobile.innerText="PARAR (↑)";
+                resetReloj(); 
+            }
         };
 
         function resetReloj() {
@@ -1547,6 +1530,31 @@
 
         actualizarListaSeriales();
         renderizar();
+
+        // ----------------------------------------------------
+        // LOGICA PARA MOVER PANELES EN MODO MÓVIL AUTOMÁTICAMENTE
+        // ----------------------------------------------------
+        function moveStatusPanel() {
+            const content = document.getElementById('status-panel-content');
+            const desktopContainer = document.getElementById('desktop-status-container');
+            const mobileContainer = document.getElementById('mobile-status-container');
+
+            if (window.innerWidth <= 768) {
+                // En móviles, poner la información en el contenedor de abajo (antes del admin)
+                if (mobileContainer && content && !mobileContainer.contains(content)) {
+                    mobileContainer.appendChild(content);
+                }
+            } else {
+                // En PC, regresar la información al panel central arriba
+                if (desktopContainer && content && !desktopContainer.contains(content)) {
+                    desktopContainer.appendChild(content);
+                }
+            }
+        }
+
+        // Detectar si el usuario voltea la pantalla o redimensiona
+        window.addEventListener('resize', moveStatusPanel);
+        setTimeout(moveStatusPanel, 200); // Llamado inicial
    } 
 </script>
 </body>
