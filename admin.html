@@ -496,9 +496,11 @@
               const banner = document.getElementById('status-sala-banner');
               if(banner) {
                   if(datos.estadoSala === "abierta") {
-                      banner.innerText = "✅ SALA ABIERTA Y FUNCIONANDO";
-                      banner.style.background = "#28a745"; 
+                      // Oculta el letrero si la sala está abierta
+                      banner.style.display = "none"; 
                   } else {
+                      // Muestra el letrero rojo si la sala está cerrada
+                      banner.style.display = "block";
                       banner.innerText = "⚠️ SALA CERRADA: para jugar por favor dale ABRIR";
                       banner.style.background = "#dc3545"; 
                   }
