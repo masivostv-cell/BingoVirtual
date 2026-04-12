@@ -493,6 +493,9 @@
           if(documento.exists()) {
               const datos = documento.data();
               
+              // -> CAMBIO APLICADO: Guardamos el estado globalmente para poder bloquear los botones
+              window.ESTADO_SALA_ACTUAL = datos.estadoSala;
+              
               const banner = document.getElementById('status-sala-banner');
               if(banner) {
                   if(datos.estadoSala === "abierta") {
@@ -1217,6 +1220,13 @@
 
         window.sacarBalota = async () => {
             if(!checkSecurity()) return;
+            
+            // -> CAMBIO APLICADO: Bloquea si intentas sacar balota con la sala cerrada
+            if (window.ESTADO_SALA_ACTUAL !== "abierta") {
+                alert("⚠️ ACCIÓN BLOQUEADA: Debes hacer clic en '🟢 ABRIR SALA' antes de empezar a cantar balotas.");
+                return;
+            }
+
             if(dbLocal.juego.length >= 75) return;
             
             let r;
@@ -1526,6 +1536,13 @@
 
         window.toggleAutomatico = () => {
             if(!checkSecurity()) return;
+
+            // -> CAMBIO APLICADO: Bloquea si intentas poner modo automático con la sala cerrada
+            if (window.ESTADO_SALA_ACTUAL !== "abierta" && !timerAuto) {
+                alert("⚠️ ACCIÓN BLOQUEADA: Debes hacer clic en '🟢 ABRIR SALA' antes de iniciar el automático.");
+                return;
+            }
+
             const clock = document.getElementById('timer-auto-container');
             const btn = document.getElementById('btn-auto');
             const btnMobile = document.getElementById('btn-auto-mobile');
