@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Sala 2 - V15.8 (Figuras Precargadas + Seguridad)</title>
+    <title>Bingo Sala 2 - V15.8 (Horizontal Optimizado)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -127,6 +127,22 @@
         .bola-mini.activa { background-color: #ffeb3b !important; color: #000 !important; border: 3px solid #000; }
         .bola-mini.ultima { background-color: #d32f2f !important; color: #fff !important; animation: pulso 0.8s infinite alternate; border: 3px solid #fff !important; }
 
+        /* TEXTO BINGO PARA MÓVIL */
+        #bingo-word-mobile {
+            display: none;
+            text-align: center;
+            font-size: 50px;
+            font-weight: 900;
+            text-transform: uppercase;
+            background: linear-gradient(to bottom, #d32f2f 0%, #ffc107 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(2px 3px 2px rgba(0,0,0,0.3));
+            margin: 5px 0;
+            letter-spacing: 10px;
+            font-family: 'Arial Black', sans-serif;
+        }
+
         /* ADMIN */
         .admin-zone { background: #2b2b2b; color: white; padding: 30px; text-align: center; flex-shrink: 0; }
         .admin-btn { border-radius: 8px; border: none; font-weight: bold; cursor: pointer; padding: 15px 25px; color: white; margin: 5px; font-size: 14px; }
@@ -156,42 +172,49 @@
         @keyframes pulso { from { transform: scale(1); } to { transform: scale(1.05); } }
 
         /* ========================================================
-           ADAPTACIÓN RESPONSIVA PARA TELÉFONOS (MOBILE VIEW)
+           ADAPTACIÓN RESPONSIVA PARA TELÉFONOS (MOBILE VIEW - HORIZONTAL COMPACTO)
            ======================================================== */
         @media (max-width: 768px) {
-            #pantalla-principal { height: auto; min-height: 100vh; padding: 5px; }
-            .header-bingo { height: auto; flex-direction: column; padding: 10px; gap: 10px; }
-            .media-zone { display: none; } /* Ocultar media zones para ahorrar espacio */
-            .game-center-panel { flex-direction: column; width: 100%; gap: 10px; }
+            #pantalla-principal { height: auto; min-height: 100vh; padding: 5px; justify-content: flex-start; }
+            .header-bingo { height: auto; flex-direction: column; padding: 10px; gap: 5px; margin-bottom: 5px; }
+            .media-zone { display: none; } 
+            .game-center-panel { flex-direction: column; width: 100%; gap: 5px; }
             
-            /* Ajustes Balota Principal */
-            .balota-grande { width: 120px; height: 120px; border-width: 4px; }
-            .balota-grande .numero-balota { font-size: 60px; }
-            #main-letra { font-size: 20px !important; }
-            .bola-historial { width: 35px; height: 35px; font-size: 16px; }
+            /* BOTONES MÓVILES ARRIBA */
+            #mobile-controls { 
+                display: flex !important; 
+                order: -1; 
+                margin-top: 0 !important; 
+                margin-bottom: 10px; 
+                gap: 10px; 
+                width: 100%;
+            }
+            #mobile-controls button { flex: 1; padding: 12px !important; font-size: 15px; font-weight: bold; border-radius: 8px; border: none; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
 
-            /* Controles Móviles (Botones Extra) */
-            #mobile-controls { display: flex !important; }
+            /* Balota Principal Compacta */
+            .balota-grande { width: 90px; height: 90px; border-width: 3px; }
+            .balota-grande .numero-balota { font-size: 40px; }
+            #main-letra { font-size: 14px !important; }
+            .bola-historial { width: 28px; height: 28px; font-size: 12px; }
 
-            /* Ajustes del Tablero para encajar en el celular */
-            #tablero-maestro { gap: 4px; margin-bottom: 15px; }
-            .fila-bingo { gap: 3px; }
-            .letra-circulo { width: 30px; height: 30px; font-size: 20px; border-width: 2px; }
-            .numeros-grid { gap: 2px; }
-            .bola-mini { height: 35px; font-size: 15px; border-radius: 4px; border-width: 1px; }
+            /* TABLERO HORIZONTAL COMPACTO */
+            #tablero-maestro { gap: 4px; margin-bottom: 10px; flex-grow: 0; display: flex; flex-direction: column; }
+            .fila-bingo { flex: none; gap: 4px; height: 32px; display: flex; flex-direction: row; }
+            .letra-circulo { width: 28px; height: 28px; font-size: 16px; border-width: 2px; }
+            .numeros-grid { gap: 2px; display: grid; grid-template-columns: repeat(15, 1fr); height: 100%; }
+            .bola-mini { font-size: 12px; border-radius: 4px; height: 100%; }
 
-            /* Intercambio de Posición del Status (Banners) */
+            /* Mostrar palabra BINGO */
+            #bingo-word-mobile { display: block; }
+
+            /* Banners de estado abajo del tablero */
             #desktop-status-container { display: none !important; }
-            #mobile-status-container { display: flex !important; }
+            #mobile-status-container { display: flex !important; margin-top: 5px; margin-bottom: 15px; }
             
-            /* Tamaños de Texto Adaptados para los Banners en Móvil */
-            #status-sala-banner { font-size: 14px !important; padding: 6px 10px !important; }
-            #display-jugadores { font-size: 18px !important; }
-            #display-codigo-sala { font-size: 18px !important; }
-            #contador-balotas { font-size: 45px !important; }
-
+            #status-sala-banner { font-size: 13px !important; padding: 6px 10px !important; margin-bottom: 5px !important; width: 100% !important; }
+            #contador-balotas { font-size: 40px !important; margin-top: 5px; }
             .admin-zone { padding: 15px 10px; }
-            .admin-btn { padding: 12px 15px; font-size: 14px !important; }
+            .admin-btn { padding: 12px 15px; font-size: 14px !important; width: 48%; display: inline-block; }
         }
     </style>
 </head>
@@ -236,17 +259,18 @@
                 </div>
 
                 <div style="display:flex; flex-direction:column; align-items:center;">
+                    
+                    <div id="mobile-controls" style="display:none;">
+                        <button onclick="sacarBalota()" style="background:#28a745;">CANTAR (↓)</button>
+                        <button id="btn-auto-mobile" onclick="toggleAutomatico()" style="background:#007bff;">AUTO (↑)</button>
+                    </div>
+
                     <div class="balota-grande">
                         <span id="main-letra" style="font-size: 2.5vh; font-weight: bold;">-</span>
                         <span id="main-numero" class="numero-balota">--</span>
                     </div>
                     <div id="historial-4" class="historial-balotas">
                         <div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div>
-                    </div>
-                    
-                    <div id="mobile-controls" style="display:none; justify-content:center; gap:10px; margin-top:15px; width:100%;">
-                        <button onclick="sacarBalota()" style="background:#28a745; color:white; border:none; padding:8px 20px; border-radius:5px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.3); cursor:pointer;">CANTAR (↓)</button>
-                        <button id="btn-auto-mobile" onclick="toggleAutomatico()" style="background:#007bff; color:white; border:none; padding:8px 20px; border-radius:5px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.3); cursor:pointer;">AUTO (↑)</button>
                     </div>
                 </div>
 
@@ -267,7 +291,12 @@
                     </div>
                 </div>
             </div> <div id="media-right" class="media-zone"></div>
-        </div> <div id="tablero-maestro"></div>
+        </div> 
+        
+        <div id="tablero-maestro"></div>
+        
+        <div id="bingo-word-mobile">BINGO</div>
+
     </div>
 
     <div class="admin-zone">
