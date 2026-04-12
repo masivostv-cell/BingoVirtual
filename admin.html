@@ -207,13 +207,15 @@
             /* Mostrar palabra BINGO */
             #bingo-word-mobile { display: block; }
 
-            /* Banners de estado abajo del tablero */
+            /* Banners de estado AHORA EN EL ESPACIO BLANCO */
             #desktop-status-container { display: none !important; }
-            #mobile-status-container { display: flex !important; margin-top: 5px; margin-bottom: 15px; }
+            #mobile-status-container { display: flex !important; margin-top: 15px; margin-bottom: 15px; }
             
             #status-sala-banner { font-size: 13px !important; padding: 6px 10px !important; margin-bottom: 5px !important; width: 100% !important; }
-            #contador-balotas { font-size: 40px !important; margin-top: 5px; }
-            .admin-zone { padding: 15px 10px; }
+            #contador-balotas { font-size: 45px !important; margin-top: 5px; }
+            
+            /* Ajuste extra de la zona admin para que se vea bien */
+            .admin-zone { padding: 15px 10px; margin-top: auto; }
             .admin-btn { padding: 12px 15px; font-size: 14px !important; width: 48%; display: inline-block; }
         }
     </style>
@@ -297,11 +299,11 @@
         
         <div id="bingo-word-mobile">BINGO</div>
 
+        <div id="mobile-status-container" style="display:none; flex-direction:column; align-items:center; width:100%; margin-top: 10px; margin-bottom: 10px;"></div>
+
     </div>
 
     <div class="admin-zone">
-        <div id="mobile-status-container" style="display:none; flex-direction:column; align-items:center; width:100%; margin-bottom: 15px;"></div>
-
         <button id="btn-activar-voz" onclick="permitirSonido()" style="background:#ffc107; color:#000; border:3px solid #000; padding:15px; font-weight:900; cursor:pointer; width:100%; max-width:800px; border-radius:10px; margin:0 auto 10px; font-size:18px; display:block;">🔊 ACTIVAR SONIDO</button>
         
         <button onclick="toggleFullScreen()" style="background:#17a2b8; color:#fff; border:3px solid #fff; padding:15px; font-weight:900; cursor:pointer; width:100%; max-width:800px; border-radius:10px; margin:0 auto 20px; font-size:18px; display:block;">🖥️ PANTALLA COMPLETA</button>
