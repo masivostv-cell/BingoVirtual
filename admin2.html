@@ -1410,6 +1410,7 @@ window.copiarSecuenciaJugada = () => {
             let contenidoHTML = `
                 <html>
                 <head>
+                    <title>VERIFICADOR</title>
                     <style>
                         body{background:#121212;color:white;text-align:center;font-family:Arial;padding:10px;margin:0;overflow-x:hidden;}
                         .c-base{width:380px;background:#002b5c;padding:12px;margin:auto;border-radius:10px;border: 1px solid #333;}
@@ -1469,8 +1470,10 @@ window.copiarSecuenciaJugada = () => {
             });
             if (wins.length > 0 && wins.length !== lastWinCount) {
                 if (winRef && !winRef.closed) winRef.close();
-                winRef = window.open("", "W", "width=350,height=500");
-                winRef.document.write('<html><head><style>body{background:#1a1a1a;color:white;text-align:center;font-family:Arial;}.btn{background:#6f42c1;color:white;padding:15px;margin:10px;border:none;border-radius:8px;width:90%;font-weight:bold;cursor:pointer;}</style></head><body><h2>🏆 GANADORES</h2><div id="l"></div><script>function rev(n){window.opener.manualCheckById(n);}<\/script></body></html>');
+                // Cambiamos el nombre interno de "W" a "PREMIO"
+                winRef = window.open("", "PREMIO", "width=350,height=500");
+                // AQUÍ ESTÁ LA MAGIA: Agregamos <title>PREMIO</title> para OBS
+                winRef.document.write('<html><head><title>PREMIO</title><style>body{background:#1a1a1a;color:white;text-align:center;font-family:Arial;}.btn{background:#6f42c1;color:white;padding:15px;margin:10px;border:none;border-radius:8px;width:90%;font-weight:bold;cursor:pointer;}</style></head><body><h2>🏆 GANADORES</h2><div id="l"></div><script>function rev(n){window.opener.manualCheckById(n);}<\/script></body></html>');
                 wins.forEach(n => { let b = winRef.document.createElement('button'); b.className="btn"; b.innerText="CARTÓN #"+n; b.onclick = () => winRef.rev(n); winRef.document.getElementById('l').appendChild(b); });
                 lastWinCount = wins.length;
             } else if(wins.length === 0) lastWinCount = 0;
