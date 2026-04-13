@@ -206,14 +206,28 @@
                     </div>
                 </div>
 
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div style="background: #004080; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                        SALA: <span id="display-codigo-sala" style="color:#ffc107; letter-spacing: 2px;">---</span>
+                <div id="desktop-status-container" style="display:flex; flex-direction:column; align-items:center;">
+                    <div id="status-panel-content" style="display:flex; flex-direction:column; align-items:center; width: 100%;">
+                        <div id="status-sala-banner" style="background: #dc3545; color: white; padding: 8px 20px; border-radius: 8px; font-weight: 900; font-size: 2.2vh; margin-bottom: 8px; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.3); width: 100%; text-align: center;">
+                            ⚠️ SALA CERRADA: para jugar por favor dale ABRIR
+                        </div>
+
+                        <div style="background: #28a745; color: white; padding: 3px 15px; border-radius: 8px; font-weight: bold; font-size: 2vh; margin-bottom: 5px; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            👥 JUGADORES: <span id="display-jugadores" style="color:#ffeb3b; font-size: 2.5vh; font-weight: 900;">0</span>
+                        </div>
+
+                        <div style="background: #004080; color: white; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 2.5vh; margin-bottom: 5px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                            SALA: <span id="display-codigo-sala" style="color:#ffc107; letter-spacing: 2px;">---</span>
+                        </div>
+                        <div id="contador-balotas" style="font-size:8vh; font-weight:900; color:#d32f2f; line-height: 0.9;">0/75</div>
                     </div>
-                    <div id="contador-balotas" style="font-size:8vh; font-weight:900; color:#d32f2f; line-height: 0.9;">0/75</div>
                 </div>
             </div> <div id="media-right" class="media-zone"></div>
-        </div> <div id="tablero-maestro"></div>
+        </div> 
+        
+        <div id="tablero-maestro"></div>
+        <div id="bingo-word-mobile" style="display:none;">BINGO</div>
+        <div id="mobile-status-container" style="display:none; flex-direction:column; align-items:center; width:100%; margin-top: 10px; margin-bottom: 10px;"></div>
     </div>
 
     <div class="admin-zone">
@@ -225,7 +239,9 @@
         <button id="btn-auto" onclick="toggleAutomatico()" class="admin-btn" style="background:#007bff; font-size: 20px;">AUTO (↑)</button>
         <button id="btn-lock" onclick="toggleLock()" class="admin-btn" style="background:#6c757d; font-size: 20px;">BALOTA MANUAL (OFF)</button>
         <button onclick="abrirConfig()" class="admin-btn" style="background:#ffc107; color:black; font-size: 20px;">FIGURA</button>
-        <button onclick="REINICIAR_JUEGO()" class="admin-btn" style="background:#dc3545; border: 2px solid white;">🔄 REINICIAR TODO</button>
+        <button onclick="abrirSala()" class="admin-btn" style="background:#28a745; border: 2px solid white; font-size: 18px;">🟢 ABRIR SALA</button>
+        <button onclick="cerrarSala()" class="admin-btn" style="background:#dc3545; border: 2px solid white; font-size: 18px;">🔴 CERRAR SALA (Expulsar a todos)</button>
+        <button onclick="REINICIAR_JUEGO()" class="admin-btn" style="background:#ff9800; color:black; border: 2px solid white; font-size: 18px;">🔄 NUEVA PARTIDA (Limpiar Tablero)</button>
         <button onclick="logout()" class="admin-btn" style="background:#000;">SALIR / CERRAR CACHE</button>
         
         <button onclick="borrarDatosFabrica()" class="admin-btn" style="background: #000; border: 2px solid red; color: red; margin-top: 15px; width: 100%;">
@@ -395,7 +411,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDGlCcqIxjX3c_GustIB7_vjtyFwZ_q010",
@@ -410,7 +426,7 @@
   window.db = getFirestore(app);
   
   // Guardamos las herramientas y agregamos onSnapshot
-  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot };
+  window.firebaseTools = { doc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc };
   console.log("✅ Servidor Firebase Inicializado y Conectado");
 
   // 🔥 NUEVO RADAR DE BINGOS CANTADOS (A PRUEBA DE FALLOS) 🔥
@@ -418,19 +434,27 @@
       let ultimoBingoVisto = Date.now(); 
       const salaRefRadar = doc(window.db, "salas", pinDeLaSalaActual);
 
-      // Escuchamos la sala correcta en tiempo real
       onSnapshot(salaRefRadar, (documento) => {
           if(documento.exists()) {
               const datos = documento.data();
               
+              window.ESTADO_SALA_ACTUAL = datos.estadoSala;
+              
+              const banner = document.getElementById('status-sala-banner');
+              if(banner) {
+                  if(datos.estadoSala === "abierta") {
+                      banner.style.display = "none"; 
+                  } else {
+                      banner.style.display = "block";
+                      banner.innerText = "⚠️ SALA CERRADA: para jugar por favor dale ABRIR";
+                      banner.style.background = "#dc3545"; 
+                  }
+              }
+
               if(datos.alertaBingo && datos.alertaBingo.timestamp > ultimoBingoVisto) {
                   ultimoBingoVisto = datos.alertaBingo.timestamp;
-                  
-                  // 1. Llenamos automáticamente el cuadro de texto del administrador
                   const inputRevision = document.getElementById('num-revisar');
                   if(inputRevision) inputRevision.value = datos.alertaBingo.carton;
-
-                  // 2. Disparamos la alerta en pantalla
                   alert(`🚨 ¡ATENCIÓN: BINGO CANTADO! 🚨\n\nEl jugador "${datos.alertaBingo.nombre.toUpperCase()}" acaba de cantar BINGO con el CARTÓN #${datos.alertaBingo.carton}.\n\nEl número ya se puso en tu verificador, solo haz clic en "1. VERIFICAR".`);
               }
           }
@@ -879,7 +903,26 @@ window.copiarSecuenciaJugada = () => {
         if (window.iniciarRadarDeBingos) {
             window.iniciarRadarDeBingos(window.MI_CODIGO_SALA);
         }
-
+        const iniciarContadorJugadores = () => {
+            if (window.db && window.firebaseTools && window.firebaseTools.collection) {
+                try {
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
+                    
+                    window.firebaseTools.onSnapshot(jugadoresRef, (snapshot) => {
+                        const totalJugadores = snapshot.size; 
+                        if(document.getElementById('display-jugadores')) {
+                            document.getElementById('display-jugadores').innerText = totalJugadores;
+                        }
+                    });
+                } catch (err) {
+                    console.error("❌ Fallo crítico al configurar el contador:", err);
+                }
+            } else {
+                setTimeout(iniciarContadorJugadores, 500); 
+            }
+        };
+        iniciarContadorJugadores();
         // INICIAR RELOJ LOCAL, CONTADOR DE TIEMPO Y VIGILANTE
         setInterval(() => {
             const ahora = new Date();
@@ -1302,35 +1345,63 @@ window.copiarSecuenciaJugada = () => {
 
         window.toggleAutoWin = (val) => { if(!checkSecurity()) return; dbLocal.config.autoWin = val; guardarDatos(); };
         
+        window.abrirSala = async () => { 
+            if(!checkSecurity()) return;
+            if(!confirm("🟢 ¿Deseas ABRIR la sala? A partir de ahora los jugadores podrán ingresar.")) return;
+            try {
+                if (window.db && window.firebaseTools) {
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
+                    await window.firebaseTools.setDoc(salaRef, { estadoSala: "abierta" }, { merge: true });
+                    alert("✅ La sala está ABIERTA. Los jugadores ya pueden entrar.");
+                }
+            } catch (error) { console.error("Error abriendo la sala:", error); }
+        };
+
+        window.cerrarSala = async () => { 
+            if(!checkSecurity()) return;
+            if(!confirm("🔴 ¿Estás seguro de CERRAR la sala?\n\nEsto expulsará a todos los jugadores inmediatamente y reiniciará el tablero.")) return;
+            try {
+                if (window.db && window.firebaseTools) {
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
+                    await window.firebaseTools.setDoc(salaRef, {
+                        estadoSala: "cerrada", senalExpulsion: Date.now(), balotasLlamadas: [], ganadorConfirmado: null, alertaBingo: null
+                    }, { merge: true });
+
+                    const jugadoresRef = window.firebaseTools.collection(window.db, "salas", pinSeguro, "jugadores");
+                    const snapshot = await window.firebaseTools.getDocs(jugadoresRef);
+                    snapshot.forEach((docSnap) => { window.firebaseTools.deleteDoc(docSnap.ref); });
+
+                    dbLocal.juego = []; 
+                    if(document.getElementById('timer-auto-container')) document.getElementById('timer-auto-container').style.display = 'none';
+                    guardarDatos(); renderizar();
+                    alert("🚪 La sala ha sido CERRADA y el tablero está limpio.");
+                }
+            } catch (error) { console.error("Error cerrando la sala:", error); }
+        };
+
         window.REINICIAR_JUEGO = async () => { 
             if(!checkSecurity()) return;
-            if(!confirm("¿Estás seguro de REINICIAR TODO para una nueva partida?")) return;
+            if(!confirm("🔄 ¿Estás seguro de iniciar una NUEVA PARTIDA?\n\nEsto limpiará los números de tu pantalla y de los celulares de los jugadores, pero NO los expulsará de la sala.")) return;
             
-            dbLocal.juego = []; 
-            lastWinCount = 0; 
+            dbLocal.juego = []; lastWinCount = 0; 
             if(timerAuto) clearInterval(timerAuto);
             if(timerVisual) clearInterval(timerVisual);
             timerAuto = null;
-            document.getElementById('timer-auto-container').style.display = 'none';
-            document.getElementById('btn-auto').innerText = "AUTO (↑)";
-            guardarDatos(); 
-            renderizar();
+            if(document.getElementById('timer-auto-container')) document.getElementById('timer-auto-container').style.display = 'none';
+            if(document.getElementById('btn-auto')) document.getElementById('btn-auto').innerText = "AUTO (↑)";
+            guardarDatos(); renderizar();
 
-            // 🔥 NUEVO: Enviamos el GATILLO INFALIBLE de reinicio a Firebase
             try {
                 if (window.db && window.firebaseTools) {
-                    const salaRef = window.firebaseTools.doc(window.db, "salas", window.MI_CODIGO_SALA);
+                    const pinSeguro = String(window.MI_CODIGO_SALA).trim();
+                    const salaRef = window.firebaseTools.doc(window.db, "salas", pinSeguro);
                     await window.firebaseTools.setDoc(salaRef, {
-                        estado: "esperando",
-                        balotasLlamadas: [], 
-                        ganadorConfirmado: null, 
-                        alertaBingo: null,
-                        senalReinicio: Date.now() // ESTO OBLIGA A LOS TELÉFONOS A BORRARSE
+                        balotasLlamadas: [], ganadorConfirmado: null, alertaBingo: null, senalReinicio: Date.now() 
                     }, { merge: true });
                 }
-            } catch (error) {
-                console.error("Error reiniciando la sala en Firebase:", error);
-            }
+            } catch (error) { console.error("Error reiniciando el tablero:", error); }
         };
 
         // --- LÓGICA DEL NUEVO MODAL DE FIGURAS ---
