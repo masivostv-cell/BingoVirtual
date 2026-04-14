@@ -13,63 +13,22 @@
         #login-section input { padding: 12px; margin: 10px 0; width: 100%; border-radius: 5px; border: none; box-sizing: border-box; font-size: 16px; }
         #login-section button { padding: 12px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
         
-        /* ENCABEZADO SUPERIOR */
-        #encabezado-fijo {
-            width: 100%; z-index: 1000;
-            background: #f1f3f5; color: #333; padding: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            border-bottom: 3px solid #ccc; box-sizing: border-box;
-            display: none; /* Se muestra al loguearse */
-            flex-direction: column; gap: 10px;
-        }
-
-        /* FILA SUPERIOR DEL ENCABEZADO */
-        .top-info-row { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 800px; margin: 0 auto; }
-        
-        /* Figura */
-        .figura-box { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
-        .figura-titulo { font-size: 10px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 3px; }
-        #figura-objetivo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; width: 40px; background-color: #333; padding: 2px; border: 1px solid #777; }
-        .celda-figura { aspect-ratio: 1; background-color: #555; }
-        .celda-figura.activa { background-color: #ffeb3b; }
-        #nombre-figura-display { font-size: 9px; font-weight: bold; color: #666; margin-top: 3px; text-transform: uppercase; text-align: center; }
-
-        /* Centro (Balota y Reloj) */
-        .centro-box { display: flex; flex-direction: column; align-items: center; }
-        .balota-gigante {
-            width: 70px; height: 70px;
-            background: radial-gradient(circle at 30% 30%, #ff4d4d, #b71c1c);
-            border-radius: 50%; border: 3px solid #8e0000; color: white;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-        #main-letra { font-size: 14px; font-weight: bold; line-height: 1; margin-bottom: 2px; }
-        #main-numero { font-size: 28px; font-weight: 900; line-height: 1; }
-        
-        .historial-bolas { display: flex; gap: 4px; margin-top: 5px; }
-        .bola-historial {
-            width: 22px; height: 22px; background: #495057; color: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
-        }
-
-        /* Contador */
-        .contador-box { font-size: clamp(24px, 6vw, 40px); font-weight: 900; color: #d32f2f; min-width: 70px; text-align: right; }
-
         /* ESPACIO PARA VIDEO DE FACEBOOK RESPONSIVO */
+        #video-section {
+            width: 100%;
+            background: #000;
+            display: none; /* Se muestra al entrar si hay video */
+            border-bottom: 3px solid #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
         .fb-video-container {
             width: 100%;
             max-width: 800px;
-            margin: 10px auto 0 auto;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #000;
-            display: none; /* Se muestra si hay video */
+            margin: 0 auto;
             position: relative;
             /* Esta propiedad hace que el video escale perfecto en teléfono y PC sin cortarse */
             aspect-ratio: 16 / 9; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        
         #fb-iframe {
             position: absolute;
             top: 0;
@@ -79,55 +38,39 @@
             border: none;
         }
 
-        /* ZONA DE JUEGO (CARTÓN) */
+        /* ZONA DE JUEGO PRINCIPAL */
         #game-section { display: none; width: 100%; max-width: 500px; text-align: center; padding: 20px 10px 50px 10px; box-sizing: border-box; }
         .info-jugador { background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom: 15px; font-size: 14px; }
         .info-jugador span { color: #ffc107; font-weight: bold; }
         
+        /* CHAT INTERNO FLOTANTE */
+        #btn-toggle-chat { position: fixed; bottom: 20px; right: 20px; background: #004080; color: white; border: 2px solid #fff; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 0; }
+        #notificacion-chat { position: absolute; top: -5px; right: -5px; background: #d32f2f; color: white; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #121212; }
+        .chat-container { position: fixed; bottom: 90px; right: 20px; width: 320px; max-width: 85vw; background: #1a1a1a; border-radius: 10px; border: 1px solid #444; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.8); z-index: 1001; }
+        .chat-header { background: #004080; color: white; padding: 10px 15px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header span { text-transform: uppercase; letter-spacing: 1px; }
+        .btn-minimizar { background: none; border: none; color: white; font-size: 18px; cursor: pointer; font-weight: bold; padding: 0; }
+        .chat-messages { height: 220px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; scroll-behavior: smooth; }
+        .chat-mensaje { background: #2d2d2d; padding: 8px 10px; border-radius: 6px; word-wrap: break-word; text-align: left; line-height: 1.4; }
+        .chat-mensaje span { font-weight: bold; color: #ffc107; margin-right: 5px; }
+        .chat-input-area { display: flex; border-top: 1px solid #333; }
+        .chat-input-area input { flex: 1; padding: 12px; border: none; background: #111; color: white; outline: none; font-size: 14px; }
+        .chat-input-area button { padding: 10px 15px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        .chat-input-area button:hover { background: #218838; }
+
+        /* ESTILO BOTÓN CANTAR BINGO */
+        #container-btn-bingo { width: 100%; max-width: 450px; margin: 15px auto; display: flex; justify-content: center; }
+        #btn-bingo { width: 100%; padding: 15px; border-radius: 10px; background-color: #d32f2f; color: white; border: 3px solid #ff4d4d; cursor: pointer; font-size: 22px; font-weight: 900; box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4); transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 2px; }
+        #btn-bingo:hover { background-color: #b71c1c; transform: translateY(-2px); }
+        #btn-bingo:disabled { background-color: #9e9e9e; border-color: #777; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        /* CARTONES */
         .carton-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background-color: black; padding: 5px; border: 5px solid black; user-select: none; width: 100%; box-sizing: border-box; }
         .letra-bingo { background-color: #004080; color: white; font-size: 22px; font-weight: bold; padding: 10px 0; }
         .numero-carton { background-color: white; color: black; font-size: clamp(18px, 5vw, 24px); font-weight: 900; padding: clamp(10px, 4vw, 20px) 0; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
         .numero-carton:active { transform: scale(0.95); }
         .numero-carton.marcado { background-color: #ffeb3b; }
         .numero-carton.centro { background-color: #ccc; font-size: 20px; }
-
-        /* --- ESTILO BOTÓN CANTAR BINGO --- */
-        #container-btn-bingo {
-            width: 100%;
-            max-width: 450px;
-            margin: 15px auto;
-            display: flex;
-            justify-content: center;
-        }
-
-        #btn-bingo {
-            width: 100%;
-            padding: 15px;
-            border-radius: 10px;
-            background-color: #d32f2f;
-            color: white;
-            border: 3px solid #ff4d4d;
-            cursor: pointer;
-            font-size: 22px;
-            font-weight: 900;
-            box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4);
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        #btn-bingo:hover {
-            background-color: #b71c1c;
-            transform: translateY(-2px);
-        }
-
-        #btn-bingo:disabled {
-            background-color: #9e9e9e;
-            border-color: #777;
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-        }
     </style>
 </head>
 <body>
@@ -146,7 +89,7 @@
 
     <div id="login-section">
         <h2 style="color:#ffc107; margin-top:0;">Entrar a la Sala</h2>
-        <input type="text" id="nombre-jugador" placeholder="Tu Nombre">
+        <input type="text" id="nombre-jugador" placeholder="Tu Nombre" maxlength="15">
         <input type="number" id="codigo-sala" placeholder="PIN de la Sala (6 dígitos)" style="font-size: 18px; font-weight: bold; text-align: center;">
         <input type="text" id="numero-carton" placeholder="N° de Cartones (Ej: 15 o 15,22,8)">
         
@@ -156,29 +99,9 @@
         <button onclick="entrarSala()">Ingresar al Juego</button>
     </div>
 
-    <div id="encabezado-fijo">
-        <div class="top-info-row">
-            <div class="figura-box">
-                <div class="figura-titulo">FIGURA</div>
-                <div id="figura-objetivo"></div>
-                <div id="nombre-figura-display">BINGO</div>
-            </div>
-
-            <div class="centro-box">
-                <div class="balota-gigante">
-                    <span id="main-letra">-</span>
-                    <span id="main-numero">--</span>
-                </div>
-                <div id="historial-bolas" class="historial-bolas">
-                    <div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div>
-                </div>
-            </div>
-
-            <div class="contador-box" id="contador-balotas">0/75</div>
-        </div>
-
-        <!-- Contenedor dinámico del Iframe de Facebook -->
-        <div id="fb-video-container" class="fb-video-container">
+    <!-- Contenedor dinámico del Iframe de Facebook -->
+    <div id="video-section">
+        <div class="fb-video-container">
             <iframe id="fb-iframe" src="" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
         </div>
     </div>
@@ -188,9 +111,26 @@
             Sala: <span id="display-sala">---</span> &nbsp;|&nbsp; Jugador: <span id="display-nombre">---</span>
         </div>
 
-        <button id="btn-activar-audio" onclick="desbloquearAudio()" style="background:#17a2b8; color:white; padding:12px; border:2px solid white; border-radius:8px; width:100%; max-width:450px; margin: 0 auto 15px auto; font-weight:bold; font-size:18px; cursor:pointer; display:block; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-            🔊 ACTIVAR AUDIO (iPhone/Móvil)
+        <!-- Botón flotante para abrir el chat -->
+        <button id="btn-toggle-chat" onclick="toggleChat()">
+            💬
+            <div id="notificacion-chat">!</div>
         </button>
+
+        <!-- Chat Interno Flotante -->
+        <div id="panel-chat" class="chat-container">
+            <div class="chat-header">
+                <span>💬 Chat de la Sala</span>
+                <button class="btn-minimizar" onclick="toggleChat()">✖</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <!-- Los mensajes se cargarán aquí -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Escribe un mensaje..." maxlength="80">
+                <button onclick="enviarMensaje()">Enviar</button>
+            </div>
+        </div>
 
         <div id="container-btn-bingo">
             <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR BINGO!</button>
@@ -201,7 +141,8 @@
      
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // Añadimos nuevas funciones de Firebase para el Chat (collection, addDoc, query, orderBy, limit)
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc, deleteDoc, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDGlCcqIxjX3c_GustIB7_vjtyFwZ_q010",
@@ -220,13 +161,13 @@
         let balotasGlobales = [];
         let figuraGlobal = [];
         let miReferenciaDeJugador = null;
-        window.ultimaBalotaCantada = 0;
+        let unsubscribeChat = null; // Para limpiar el chat al salir
 
         window.entrarSala = async () => {
-            const nombre = document.getElementById('nombre-jugador').value;
+            const nombre = document.getElementById('nombre-jugador').value.trim();
             const sala = document.getElementById('codigo-sala').value.toUpperCase();
             const numCartonInput = document.getElementById('numero-carton').value;
-            const urlFbInput = document.getElementById('url-fb').value.trim(); // Lee el enlace de FB
+            const urlFbInput = document.getElementById('url-fb').value.trim();
 
             if (!nombre || !sala || !numCartonInput) { alert("Llena todos los campos obligatorios."); return; }
 
@@ -286,17 +227,16 @@
 
                     numerosDeCartonesOficiales = numsRequeridos;
                     document.getElementById('login-section').style.display = 'none';
-                    document.getElementById('encabezado-fijo').style.display = 'flex';
                     document.getElementById('game-section').style.display = 'block';
+                    document.getElementById('btn-toggle-chat').style.display = 'flex';
                     
                     document.getElementById('display-sala').innerText = sala;
                     document.getElementById('display-nombre').innerText = nombre;
                     
-                    // LÓGICA PARA MOSTRAR VIDEO DE FACEBOOK
+                    // Mostrar Video si hay enlace
                     const fbUrlToUse = urlFbInput || window.fbVideoURL;
                     if (fbUrlToUse) {
-                        document.getElementById('fb-video-container').style.display = 'block';
-                        // Generar el formato del plugin oficial de FB pasando la URL codificada
+                        document.getElementById('video-section').style.display = 'block';
                         document.getElementById('fb-iframe').src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrlToUse)}&show_text=0`;
                     }
                     
@@ -305,17 +245,16 @@
                     miReferenciaDeJugador = doc(db, "salas", salaLimpia, "jugadores", nombre);
                     await setDoc(miReferenciaDeJugador, { nombre: nombre, cartones: numerosDeCartonesOficiales, conectadoEn: new Date() });
 
-                    // CORRECCIÓN IMPORTANTE: Inicializar las variables de control con los valores actuales en la BD
-                    // para no activar alertas de eventos viejos instantáneamente
                     window.ultimaExpulsionVisto = datosSala.senalExpulsion || 0; 
                     window.ultimoReinicioVisto = datosSala.senalReinicio || 0;
                     window.ultimoGanadorVisto = datosSala.ganadorConfirmado ? datosSala.ganadorConfirmado.timestamp : 0;
 
+                    // ESCUCHADOR DE LA SALA (Balotas, Figura, Ganador)
                     onSnapshot(salaRef, (docSnapshot) => {
                         if (docSnapshot.exists()) {
                             const datos = docSnapshot.data();
                             
-                            // Detectar si el administrador CERRÓ la sala (Señal nueva)
+                            // Expulsión
                             if (datos.senalExpulsion && window.ultimaExpulsionVisto !== datos.senalExpulsion) {
                                 window.ultimaExpulsionVisto = datos.senalExpulsion;
                                 salirDelJuego(); 
@@ -323,33 +262,26 @@
                                 window.location.reload(); 
                             }
 
-                            // Detectar si el administrador REINICIÓ el tablero (Señal nueva)
+                            // Reinicio
                             if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
                                 window.ultimoReinicioVisto = datos.senalReinicio;
                                 limpiarPantallaJugador(); 
                             }
 
+                            // Actualizar balotas en memoria (para validar bingo interno)
                             if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
                                 balotasGlobales = datos.balotasLlamadas;
-                                actualizarDatosBalotas(datos.balotasLlamadas);
-                                
-                                let ultimoNumeroLlamado = datos.balotasLlamadas[datos.balotasLlamadas.length - 1];
-                                if (window.ultimaBalotaCantada !== ultimoNumeroLlamado) {
-                                    window.ultimaBalotaCantada = ultimoNumeroLlamado;
-                                    window.cantarNumeroVoz(ultimoNumeroLlamado);
-                                }
-                            } else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
+                            } else {
                                 balotasGlobales = [];
-                                window.ultimaBalotaCantada = 0; 
                                 limpiarPantallaJugador();
                             }
 
+                            // Actualizar figura en memoria (para validar bingo interno)
                             if (datos.figuraActual) {
                                 figuraGlobal = datos.figuraActual;
-                                document.getElementById('nombre-figura-display').innerText = datos.nombreFigura || "BINGO";
-                                renderizarFigura(datos.figuraActual);
                             }
 
+                            // Ganador Confirmado
                             if (datos.ganadorConfirmado) {
                                 if (window.ultimoGanadorVisto !== datos.ganadorConfirmado.timestamp) {
                                     window.ultimoGanadorVisto = datos.ganadorConfirmado.timestamp;
@@ -360,6 +292,10 @@
                             }
                         }
                     });
+
+                    // INICIAR EL CHAT INTERNO
+                    iniciarChat(salaLimpia);
+
                 } else {
                     alert("La sala no existe.");
                     btnLogin.innerText = "Ingresar al Juego";
@@ -370,6 +306,83 @@
                 alert("Error de conexión al buscar los cartones.");
                 btnLogin.innerText = "Ingresar al Juego";
                 btnLogin.disabled = false;
+            }
+        };
+
+        // --- SISTEMA DE CHAT INTERNO ---
+        window.toggleChat = () => {
+            const panel = document.getElementById('panel-chat');
+            const notif = document.getElementById('notificacion-chat');
+            if (panel.style.display === 'flex') {
+                panel.style.display = 'none';
+            } else {
+                panel.style.display = 'flex';
+                notif.style.display = 'none'; // Quitar alerta al abrir
+                document.getElementById('chat-input').focus();
+            }
+        };
+
+        function iniciarChat(idSala) {
+            const chatRef = collection(db, "salas", idSala, "chat");
+            const q = query(chatRef, orderBy("timestamp", "asc"), limit(60));
+            
+            unsubscribeChat = onSnapshot(q, (snapshot) => {
+                const msgsDiv = document.getElementById('chat-messages');
+                const panel = document.getElementById('panel-chat');
+                const notif = document.getElementById('notificacion-chat');
+                
+                let hayNuevoMensaje = false;
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        hayNuevoMensaje = true;
+                    }
+                });
+
+                msgsDiv.innerHTML = '';
+                
+                snapshot.forEach((docSnap) => {
+                    const msg = docSnap.data();
+                    msgsDiv.innerHTML += `<div class="chat-mensaje"><span>${msg.nombre}:</span> ${msg.texto}</div>`;
+                });
+                
+                // Mostrar alerta si el chat está cerrado y hay un mensaje nuevo
+                if (hayNuevoMensaje && panel.style.display !== 'flex') {
+                    notif.style.display = 'flex';
+                }
+
+                // Auto-scroll al fondo
+                msgsDiv.scrollTop = msgsDiv.scrollHeight;
+            });
+
+            // Permitir enviar mensaje con la tecla Enter
+            document.getElementById('chat-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    window.enviarMensaje();
+                }
+            });
+        }
+
+        window.enviarMensaje = async () => {
+            const input = document.getElementById('chat-input');
+            const texto = input.value.trim();
+            if (!texto) return; // No enviar vacío
+
+            const nombre = document.getElementById('display-nombre').innerText.trim();
+            const sala = document.getElementById('display-sala').innerText.trim();
+
+            if (!nombre || !sala || sala === "---") return;
+
+            input.value = ''; // Limpiar caja de texto de inmediato para dar sensación de rapidez
+
+            try {
+                const chatRef = collection(db, "salas", sala, "chat");
+                await addDoc(chatRef, {
+                    nombre: nombre,
+                    texto: texto,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error("Error al enviar el mensaje", error);
             }
         };
 
@@ -431,26 +444,10 @@
         };
 
         function limpiarPantallaJugador() {
-            document.getElementById('main-letra').innerText = "-";
-            document.getElementById('main-numero').innerText = "--";
-            document.getElementById('contador-balotas').innerText = "0/75";
-            document.getElementById('historial-bolas').innerHTML = '<div class="bola-historial">-</div>'.repeat(4);
             document.getElementById('pantalla-ganador').style.display = 'none';
             document.querySelectorAll('.numero-carton').forEach(celda => {
                 if(!celda.classList.contains('centro')) celda.classList.remove('marcado');
             });
-        }
-
-        function actualizarDatosBalotas(balotas) {
-            const ultima = balotas[balotas.length - 1];
-            document.getElementById('main-numero').innerText = ultima;
-            document.getElementById('main-letra').innerText = (ultima <= 15 ? 'B' : ultima <= 30 ? 'I' : ultima <= 45 ? 'N' : ultima <= 60 ? 'G' : 'O');
-            document.getElementById('contador-balotas').innerText = balotas.length + "/75";
-
-            const ultimas = balotas.slice(-5, -1).reverse();
-            let hHtml = "";
-            for(let i=0; i<4; i++) hHtml += `<div class="bola-historial">${ultimas[i] || '-'}</div>`;
-            document.getElementById('historial-bolas').innerHTML = hHtml;
         }
 
         function renderizarCartones() {
@@ -481,22 +478,12 @@
             });
         }
 
-        function renderizarFigura(figuraArray) {
-             const container = document.getElementById('figura-objetivo');
-             container.innerHTML = '';
-             for(let i=0; i<25; i++) {
-                 let div = document.createElement('div');
-                 div.className = 'celda-figura' + (figuraArray[i] ? ' activa' : '');
-                 container.appendChild(div);
-             }
-        }
-
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             
             const salaQuery = urlParams.get('sala');
             const cartonQuery = urlParams.get('carton');
-            const fbVideoQuery = urlParams.get('fbvideo'); // Leemos el video de FB si está en URL
+            const fbVideoQuery = urlParams.get('fbvideo'); 
 
             const salaHash = window.location.hash.substring(1);
             const codigoDetectado = salaQuery || salaHash;
@@ -513,50 +500,11 @@
         });
 
         const salirDelJuego = () => {
-            if (miReferenciaDeJugador) {
-                deleteDoc(miReferenciaDeJugador);
-            }
+            if (miReferenciaDeJugador) deleteDoc(miReferenciaDeJugador);
+            if (unsubscribeChat) unsubscribeChat(); // Desconectar del chat
         };
         window.addEventListener('beforeunload', salirDelJuego);
         window.addEventListener('pagehide', salirDelJuego); 
-
-        window.desbloquearAudio = () => {
-            if ('speechSynthesis' in window) {
-                let mensajeMudo = new SpeechSynthesisUtterance("");
-                mensajeMudo.volume = 0; 
-                window.speechSynthesis.speak(mensajeMudo);
-
-                const btn = document.getElementById('btn-activar-audio');
-                btn.innerText = "✅ AUDIO ACTIVADO";
-                btn.style.backgroundColor = "#28a745"; 
-
-                setTimeout(() => {
-                    btn.style.display = 'none';
-                }, 2000);
-            } else {
-                alert("Tu navegador no soporta voces automáticas.");
-            }
-        };
-
-        window.cantarNumeroVoz = (numero) => {
-            if (!('speechSynthesis' in window)) return; 
-
-            let letra = '';
-            if (numero <= 15) letra = 'B';
-            else if (numero <= 30) letra = 'I';
-            else if (numero <= 45) letra = 'N';
-            else if (numero <= 60) letra = 'G';
-            else letra = 'O';
-
-            let textoHablar = `${letra}, ${numero}`;
-
-            let mensaje = new SpeechSynthesisUtterance(textoHablar);
-            mensaje.lang = 'es-ES'; 
-            mensaje.rate = 0.9;     
-            mensaje.pitch = 1;      
-
-            window.speechSynthesis.speak(mensaje);
-        };
     </script>
 </body>
 </html>
