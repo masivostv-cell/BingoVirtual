@@ -55,7 +55,7 @@
         /* Contador */
         .contador-box { font-size: clamp(24px, 6vw, 40px); font-weight: 900; color: #d32f2f; min-width: 70px; text-align: right; }
 
-        /* ESPACIO PARA VIDEO DE FACEBOOK */
+        /* ESPACIO PARA VIDEO DE FACEBOOK RESPONSIVO */
         .fb-video-container {
             width: 100%;
             max-width: 800px;
@@ -64,11 +64,19 @@
             overflow: hidden;
             background: #000;
             display: none; /* Se muestra si hay video */
-            justify-content: center;
-            align-items: center;
-            /* Altura base sugerida para videos de facebook */
-            height: 315px; 
+            position: relative;
+            /* Esta propiedad hace que el video escale perfecto en teléfono y PC sin cortarse */
+            aspect-ratio: 16 / 9; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        #fb-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
         /* ZONA DE JUEGO (CARTÓN) */
@@ -171,7 +179,7 @@
 
         <!-- Contenedor dinámico del Iframe de Facebook -->
         <div id="fb-video-container" class="fb-video-container">
-            <iframe id="fb-iframe" src="" width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+            <iframe id="fb-iframe" src="" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
         </div>
     </div>
 
@@ -287,7 +295,7 @@
                     // LÓGICA PARA MOSTRAR VIDEO DE FACEBOOK
                     const fbUrlToUse = urlFbInput || window.fbVideoURL;
                     if (fbUrlToUse) {
-                        document.getElementById('fb-video-container').style.display = 'flex';
+                        document.getElementById('fb-video-container').style.display = 'block';
                         // Generar el formato del plugin oficial de FB pasando la URL codificada
                         document.getElementById('fb-iframe').src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrlToUse)}&show_text=0`;
                     }
@@ -297,23 +305,30 @@
                     miReferenciaDeJugador = doc(db, "salas", salaLimpia, "jugadores", nombre);
                     await setDoc(miReferenciaDeJugador, { nombre: nombre, cartones: numerosDeCartonesOficiales, conectadoEn: new Date() });
 
-                    window.ultimoGanadorVisto = 0; 
-                    window.ultimoReinicioVisto = 0;
+                    // CORRECCIÓN IMPORTANTE: Inicializar las variables de control con los valores actuales en la BD
+                    // para no activar alertas de eventos viejos instantáneamente
+                    window.ultimaExpulsionVisto = datosSala.senalExpulsion || 0; 
+                    window.ultimoReinicioVisto = datosSala.senalReinicio || 0;
+                    window.ultimoGanadorVisto = datosSala.ganadorConfirmado ? datosSala.ganadorConfirmado.timestamp : 0;
 
                     onSnapshot(salaRef, (docSnapshot) => {
                         if (docSnapshot.exists()) {
                             const datos = docSnapshot.data();
                             
-                            if (datos.senalExpulsion && window.ultimoReinicioVisto !== datos.senalExpulsion) {
-                                window.ultimoReinicioVisto = datos.senalExpulsion;
+                            // Detectar si el administrador CERRÓ la sala (Señal nueva)
+                            if (datos.senalExpulsion && window.ultimaExpulsionVisto !== datos.senalExpulsion) {
+                                window.ultimaExpulsionVisto = datos.senalExpulsion;
                                 salirDelJuego(); 
                                 alert("🔴 El administrador ha cerrado la sala. Serás llevado al inicio.");
                                 window.location.reload(); 
                             }
+
+                            // Detectar si el administrador REINICIÓ el tablero (Señal nueva)
                             if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
                                 window.ultimoReinicioVisto = datos.senalReinicio;
                                 limpiarPantallaJugador(); 
                             }
+
                             if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
                                 balotasGlobales = datos.balotasLlamadas;
                                 actualizarDatosBalotas(datos.balotasLlamadas);
