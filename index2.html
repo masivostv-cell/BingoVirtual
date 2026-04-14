@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Online - Jugador</title>
+    <style>
+        /* RESET Y FONDOS */
+        body { font-family: Arial, sans-serif; background-color: #121212; color: white; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        /* LOGIN */
+        #login-section { background-color: #1e1e1e; padding: 30px; border-radius: 10px; text-align: center; margin-top: 50px; border: 2px solid #ffc107; width: 90%; max-width: 400px; box-sizing: border-box; }
+        #login-section input { padding: 12px; margin: 10px 0; width: 100%; border-radius: 5px; border: none; box-sizing: border-box; font-size: 16px; }
+        #login-section button { padding: 12px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
+        
+        /* ENCABEZADO SUPERIOR */
+        #encabezado-fijo {
+            width: 100%; z-index: 1000;
+            background: #f1f3f5; color: #333; padding: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border-bottom: 3px solid #ccc; box-sizing: border-box;
+            display: none; /* Se muestra al loguearse */
+            flex-direction: column; gap: 10px;
+        }
+
+        /* FILA SUPERIOR DEL ENCABEZADO */
+        .top-info-row { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 800px; margin: 0 auto; }
+        
+        /* Figura */
+        .figura-box { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+        .figura-titulo { font-size: 10px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 3px; }
+        #figura-objetivo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; width: 40px; background-color: #333; padding: 2px; border: 1px solid #777; }
+        .celda-figura { aspect-ratio: 1; background-color: #555; }
+        .celda-figura.activa { background-color: #ffeb3b; }
+        #nombre-figura-display { font-size: 9px; font-weight: bold; color: #666; margin-top: 3px; text-transform: uppercase; text-align: center; }
+
+        /* Centro (Balota y Reloj) */
+        .centro-box { display: flex; flex-direction: column; align-items: center; }
+        .balota-gigante {
+            width: 70px; height: 70px;
+            background: radial-gradient(circle at 30% 30%, #ff4d4d, #b71c1c);
+            border-radius: 50%; border: 3px solid #8e0000; color: white;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        #main-letra { font-size: 14px; font-weight: bold; line-height: 1; margin-bottom: 2px; }
+        #main-numero { font-size: 28px; font-weight: 900; line-height: 1; }
+        
+        .historial-bolas { display: flex; gap: 4px; margin-top: 5px; }
+        .bola-historial {
+            width: 22px; height: 22px; background: #495057; color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
+        }
+
+        /* Contador */
+        .contador-box { font-size: clamp(24px, 6vw, 40px); font-weight: 900; color: #d32f2f; min-width: 70px; text-align: right; }
+
+        /* ESPACIO PARA VIDEO DE FACEBOOK */
+        .fb-video-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 10px auto 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            display: none; /* Se muestra si hay video */
+            justify-content: center;
+            align-items: center;
+            /* Altura base sugerida para videos de facebook */
+            height: 315px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* ZONA DE JUEGO (CARTÓN) */
+        #game-section { display: none; width: 100%; max-width: 500px; text-align: center; padding: 20px 10px 50px 10px; box-sizing: border-box; }
+        .info-jugador { background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom: 15px; font-size: 14px; }
+        .info-jugador span { color: #ffc107; font-weight: bold; }
+        
+        .carton-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background-color: black; padding: 5px; border: 5px solid black; user-select: none; width: 100%; box-sizing: border-box; }
+        .letra-bingo { background-color: #004080; color: white; font-size: 22px; font-weight: bold; padding: 10px 0; }
+        .numero-carton { background-color: white; color: black; font-size: clamp(18px, 5vw, 24px); font-weight: 900; padding: clamp(10px, 4vw, 20px) 0; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+        .numero-carton:active { transform: scale(0.95); }
+        .numero-carton.marcado { background-color: #ffeb3b; }
+        .numero-carton.centro { background-color: #ccc; font-size: 20px; }
+
+        /* --- ESTILO BOTÓN CANTAR BINGO --- */
+        #container-btn-bingo {
+            width: 100%;
+            max-width: 450px;
+            margin: 15px auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        #btn-bingo {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #d32f2f;
+            color: white;
+            border: 3px solid #ff4d4d;
+            cursor: pointer;
+            font-size: 22px;
+            font-weight: 900;
+            box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #btn-bingo:hover {
+            background-color: #b71c1c;
+            transform: translateY(-2px);
+        }
+
+        #btn-bingo:disabled {
+            background-color: #9e9e9e;
+            border-color: #777;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-ganador" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 20px; box-sizing: border-box;">
+        <h1 style="color:#ffc107; font-size:50px; text-shadow: 0 0 20px #ffc107; margin-bottom:10px;">🏆 ¡BINGO! 🏆</h1>
+        <h2 style="color:white; font-size:24px;">TENEMOS UN GANADOR</h2>
+        <p id="texto-ganador" style="color:#28a745; font-size:35px; font-weight:900; margin:20px 0; text-transform: uppercase;">---</p>
+        <p style="color:white; font-size:20px; background: #333; padding: 10px 20px; border-radius: 10px;">Con el Cartón #<span id="texto-carton-ganador" style="color:#00ffff; font-weight:bold;">---</span></p>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 40px; width: 100%; max-width: 300px;">
+            <button onclick="document.getElementById('pantalla-ganador').style.display='none'" style="padding:15px; font-size:16px; background:#004080; color:white; border:2px solid white; border-radius:10px; cursor:pointer; font-weight:bold;">JUGAR CON ESTE CARTÓN</button>
+            <button onclick="location.reload()" style="padding:15px; font-size:16px; background:#d32f2f; color:white; border:2px solid white; border-radius:10px; cursor:pointer; font-weight:bold;">🔄 INGRESAR OTRO CARTÓN</button>
+        </div>
+    </div>
+
+    <div id="login-section">
+        <h2 style="color:#ffc107; margin-top:0;">Entrar a la Sala</h2>
+        <input type="text" id="nombre-jugador" placeholder="Tu Nombre">
+        <input type="number" id="codigo-sala" placeholder="PIN de la Sala (6 dígitos)" style="font-size: 18px; font-weight: bold; text-align: center;">
+        <input type="text" id="numero-carton" placeholder="N° de Cartones (Ej: 15 o 15,22,8)">
+        
+        <!-- Campo oculto para el video de facebook -->
+        <input type="hidden" id="url-fb">
+
+        <button onclick="entrarSala()">Ingresar al Juego</button>
+    </div>
+
+    <div id="encabezado-fijo">
+        <div class="top-info-row">
+            <div class="figura-box">
+                <div class="figura-titulo">FIGURA</div>
+                <div id="figura-objetivo"></div>
+                <div id="nombre-figura-display">BINGO</div>
+            </div>
+
+            <div class="centro-box">
+                <div class="balota-gigante">
+                    <span id="main-letra">-</span>
+                    <span id="main-numero">--</span>
+                </div>
+                <div id="historial-bolas" class="historial-bolas">
+                    <div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div><div class="bola-historial">-</div>
+                </div>
+            </div>
+
+            <div class="contador-box" id="contador-balotas">0/75</div>
+        </div>
+
+        <!-- Contenedor dinámico del Iframe de Facebook -->
+        <div id="fb-video-container" class="fb-video-container">
+            <iframe id="fb-iframe" src="" width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+        </div>
+    </div>
+
+    <div id="game-section">
+        <div class="info-jugador">
+            Sala: <span id="display-sala">---</span> &nbsp;|&nbsp; Jugador: <span id="display-nombre">---</span>
+        </div>
+
+        <button id="btn-activar-audio" onclick="desbloquearAudio()" style="background:#17a2b8; color:white; padding:12px; border:2px solid white; border-radius:8px; width:100%; max-width:450px; margin: 0 auto 15px auto; font-weight:bold; font-size:18px; cursor:pointer; display:block; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            🔊 ACTIVAR AUDIO (iPhone/Móvil)
+        </button>
+
+        <div id="container-btn-bingo">
+            <button id="btn-bingo" onclick="cantarBingo()">¡CANTAR BINGO!</button>
+        </div>
+
+        <div id="mi-carton" style="width: 100%; max-width: 450px; margin: 0 auto;"></div>
+    </div>
+     
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGlCcqIxjX3c_GustIB7_vjtyFwZ_q010",
+            authDomain: "bingo-sala-2-online.firebaseapp.com",
+            projectId: "bingo-sala-2-online",
+            storageBucket: "bingo-sala-2-online.firebasestorage.app",
+            messagingSenderId: "865001524589",
+            appId: "1:865001524589:web:45a97bd5231f16f4c01e64"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let misCartonesData = []; 
+        let numerosDeCartonesOficiales = []; 
+        let balotasGlobales = [];
+        let figuraGlobal = [];
+        let miReferenciaDeJugador = null;
+        window.ultimaBalotaCantada = 0;
+
+        window.entrarSala = async () => {
+            const nombre = document.getElementById('nombre-jugador').value;
+            const sala = document.getElementById('codigo-sala').value.toUpperCase();
+            const numCartonInput = document.getElementById('numero-carton').value;
+            const urlFbInput = document.getElementById('url-fb').value.trim(); // Lee el enlace de FB
+
+            if (!nombre || !sala || !numCartonInput) { alert("Llena todos los campos obligatorios."); return; }
+
+            const numsRequeridos = numCartonInput.split(',').map(n => n.trim()).filter(n => n !== "");
+
+            const btnLogin = document.querySelector('#login-section button');
+            btnLogin.innerText = "Buscando cartones...";
+            btnLogin.disabled = true;
+
+            try {
+                const salaLimpia = String(sala).trim();
+                const salaRef = doc(db, "salas", salaLimpia);
+                const salaDoc = await getDoc(salaRef);
+
+                if (salaDoc.exists()) {
+                    const datosSala = salaDoc.data();
+                    let todosLosCartones = null;
+
+                    if (datosSala.estadoSala !== "abierta") {
+                        alert("⏳ La sala está en espera para ser abierta por el administrador. Intenta de nuevo en un momento.");
+                        btnLogin.innerText = "Ingresar al Juego";
+                        btnLogin.disabled = false;
+                        return; 
+                    }
+
+                    if (datosSala.cartonesEmpaquetados) {
+                        try { todosLosCartones = JSON.parse(datosSala.cartonesEmpaquetados); } 
+                        catch (e) { console.error("Error al desempaquetar:", e); }
+                    } else if (datosSala.cartonesOficiales) {
+                        todosLosCartones = datosSala.cartonesOficiales;
+                    }
+
+                    if (!todosLosCartones) {
+                        alert("El administrador aún no ha subido los cartones a esta sala.");
+                        btnLogin.innerText = "Ingresar al Juego";
+                        btnLogin.disabled = false;
+                        return;
+                    }
+
+                    misCartonesData = [];
+                    let cartonesFaltantes = [];
+
+                    for (let num of numsRequeridos) {
+                        if (todosLosCartones[num]) {
+                            misCartonesData.push({ id: num, numeros: todosLosCartones[num] });
+                        } else {
+                            cartonesFaltantes.push(num);
+                        }
+                    }
+
+                    if (cartonesFaltantes.length > 0) {
+                        alert(`Los siguientes cartones no existen en la sala: ${cartonesFaltantes.join(', ')}`);
+                        btnLogin.innerText = "Ingresar al Juego";
+                        btnLogin.disabled = false;
+                        return;
+                    }
+
+                    numerosDeCartonesOficiales = numsRequeridos;
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('encabezado-fijo').style.display = 'flex';
+                    document.getElementById('game-section').style.display = 'block';
+                    
+                    document.getElementById('display-sala').innerText = sala;
+                    document.getElementById('display-nombre').innerText = nombre;
+                    
+                    // LÓGICA PARA MOSTRAR VIDEO DE FACEBOOK
+                    const fbUrlToUse = urlFbInput || window.fbVideoURL;
+                    if (fbUrlToUse) {
+                        document.getElementById('fb-video-container').style.display = 'flex';
+                        // Generar el formato del plugin oficial de FB pasando la URL codificada
+                        document.getElementById('fb-iframe').src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrlToUse)}&show_text=0`;
+                    }
+                    
+                    renderizarCartones();
+                
+                    miReferenciaDeJugador = doc(db, "salas", salaLimpia, "jugadores", nombre);
+                    await setDoc(miReferenciaDeJugador, { nombre: nombre, cartones: numerosDeCartonesOficiales, conectadoEn: new Date() });
+
+                    window.ultimoGanadorVisto = 0; 
+                    window.ultimoReinicioVisto = 0;
+
+                    onSnapshot(salaRef, (docSnapshot) => {
+                        if (docSnapshot.exists()) {
+                            const datos = docSnapshot.data();
+                            
+                            if (datos.senalExpulsion && window.ultimoReinicioVisto !== datos.senalExpulsion) {
+                                window.ultimoReinicioVisto = datos.senalExpulsion;
+                                salirDelJuego(); 
+                                alert("🔴 El administrador ha cerrado la sala. Serás llevado al inicio.");
+                                window.location.reload(); 
+                            }
+                            if (datos.senalReinicio && window.ultimoReinicioVisto !== datos.senalReinicio) {
+                                window.ultimoReinicioVisto = datos.senalReinicio;
+                                limpiarPantallaJugador(); 
+                            }
+                            if (datos.balotasLlamadas && datos.balotasLlamadas.length > 0) {
+                                balotasGlobales = datos.balotasLlamadas;
+                                actualizarDatosBalotas(datos.balotasLlamadas);
+                                
+                                let ultimoNumeroLlamado = datos.balotasLlamadas[datos.balotasLlamadas.length - 1];
+                                if (window.ultimaBalotaCantada !== ultimoNumeroLlamado) {
+                                    window.ultimaBalotaCantada = ultimoNumeroLlamado;
+                                    window.cantarNumeroVoz(ultimoNumeroLlamado);
+                                }
+                            } else if (!datos.balotasLlamadas || datos.balotasLlamadas.length === 0) {
+                                balotasGlobales = [];
+                                window.ultimaBalotaCantada = 0; 
+                                limpiarPantallaJugador();
+                            }
+
+                            if (datos.figuraActual) {
+                                figuraGlobal = datos.figuraActual;
+                                document.getElementById('nombre-figura-display').innerText = datos.nombreFigura || "BINGO";
+                                renderizarFigura(datos.figuraActual);
+                            }
+
+                            if (datos.ganadorConfirmado) {
+                                if (window.ultimoGanadorVisto !== datos.ganadorConfirmado.timestamp) {
+                                    window.ultimoGanadorVisto = datos.ganadorConfirmado.timestamp;
+                                    document.getElementById('texto-ganador').innerText = datos.ganadorConfirmado.nombre;
+                                    document.getElementById('texto-carton-ganador').innerText = datos.ganadorConfirmado.carton;
+                                    document.getElementById('pantalla-ganador').style.display = 'flex';
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    alert("La sala no existe.");
+                    btnLogin.innerText = "Ingresar al Juego";
+                    btnLogin.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error: ", error);
+                alert("Error de conexión al buscar los cartones.");
+                btnLogin.innerText = "Ingresar al Juego";
+                btnLogin.disabled = false;
+            }
+        };
+
+        window.toggleMarca = (elemento) => { elemento.classList.toggle('marcado'); };
+
+        window.cantarBingo = async () => {
+            if (!figuraGlobal || figuraGlobal.length !== 25) {
+                alert("Aún no hay una figura válida configurada en la sala.");
+                return;
+            }
+
+            const mapeoCarton = [0,5,10,15,20, 1,6,11,16,21, 2,7,12,17,22, 3,8,13,18,23, 4,9,14,19,24];
+            let cartonesGanadores = []; 
+
+            for (let carton of misCartonesData) {
+                let bingoValido = true;
+                for (let i = 0; i < 25; i++) {
+                    if (figuraGlobal[i]) { 
+                        let numeroEnCarton = carton.numeros[mapeoCarton[i]];
+                        if (numeroEnCarton !== 0 && !balotasGlobales.includes(numeroEnCarton)) {
+                            bingoValido = false;
+                            break;
+                        }
+                    }
+                }
+                if (bingoValido) {
+                    cartonesGanadores.push(carton.id); 
+                }
+            }
+
+            if (cartonesGanadores.length === 0) {
+                alert("¡FALSA ALARMA! Todavía te faltan números para completar la figura en tus cartones.");
+                return; 
+            }
+
+            const cartonGanadorId = cartonesGanadores[0];
+
+            const nombre = document.getElementById('display-nombre').innerText.trim();
+            const sala = document.getElementById('display-sala').innerText.trim();
+            const btn = document.getElementById('btn-bingo');
+            
+            btn.innerText = "ENVIANDO...";
+            try {
+                const salaLimpia = String(sala).trim();
+                const salaRef = doc(db, "salas", salaLimpia);
+                const datosBingo = { nombre: nombre, carton: cartonGanadorId, timestamp: Date.now() };
+                
+                await updateDoc(salaRef, { alertaBingo: datosBingo });
+                
+                btn.innerText = "¡BINGO ENVIADO!";
+                btn.style.backgroundColor = "#28a745"; 
+                alert(`¡Validación exitosa! Has cantado BINGO con el Cartón #${cartonGanadorId}.`);
+                setTimeout(() => { btn.innerText = "¡CANTAR BINGO!"; btn.style.backgroundColor = "#d32f2f"; }, 5000);
+            } catch (error) {
+                console.error("Error al enviar el Bingo:", error);
+                alert("Error al cantar Bingo. Revisa la conexión.");
+                btn.innerText = "¡CANTAR BINGO!";
+            }
+        };
+
+        function limpiarPantallaJugador() {
+            document.getElementById('main-letra').innerText = "-";
+            document.getElementById('main-numero').innerText = "--";
+            document.getElementById('contador-balotas').innerText = "0/75";
+            document.getElementById('historial-bolas').innerHTML = '<div class="bola-historial">-</div>'.repeat(4);
+            document.getElementById('pantalla-ganador').style.display = 'none';
+            document.querySelectorAll('.numero-carton').forEach(celda => {
+                if(!celda.classList.contains('centro')) celda.classList.remove('marcado');
+            });
+        }
+
+        function actualizarDatosBalotas(balotas) {
+            const ultima = balotas[balotas.length - 1];
+            document.getElementById('main-numero').innerText = ultima;
+            document.getElementById('main-letra').innerText = (ultima <= 15 ? 'B' : ultima <= 30 ? 'I' : ultima <= 45 ? 'N' : ultima <= 60 ? 'G' : 'O');
+            document.getElementById('contador-balotas').innerText = balotas.length + "/75";
+
+            const ultimas = balotas.slice(-5, -1).reverse();
+            let hHtml = "";
+            for(let i=0; i<4; i++) hHtml += `<div class="bola-historial">${ultimas[i] || '-'}</div>`;
+            document.getElementById('historial-bolas').innerHTML = hHtml;
+        }
+
+        function renderizarCartones() {
+            const mainContainer = document.getElementById('mi-carton');
+            mainContainer.innerHTML = ''; 
+            
+            mainContainer.style.display = 'flex';
+            mainContainer.style.flexDirection = 'column';
+            mainContainer.style.gap = '30px';
+            mainContainer.style.alignItems = 'center';
+
+            misCartonesData.forEach((cartonObj) => {
+                let html = `<div style="width: 100%;">`;
+                html += `<h3 style="margin: 0 0 10px 0; color: #ffc107; font-size: 24px; text-align: center;">CARTÓN #${cartonObj.id}</h3>`;
+                html += `<div class="carton-container">`;
+                
+                ['B', 'I', 'N', 'G', 'O'].forEach(l => html += `<div class="letra-bingo">${l}</div>`);
+                
+                const mapeoCarton = [0,5,10,15,20, 1,6,11,16,21, 2,7,12,17,22, 3,8,13,18,23, 4,9,14,19,24];
+                mapeoCarton.forEach((idx) => {
+                    let num = cartonObj.numeros[idx];
+                    if (num === 0) html += `<div class="numero-carton centro marcado">X</div>`;
+                    else html += `<div class="numero-carton" onclick="toggleMarca(this)">${num}</div>`;
+                });
+                
+                html += `</div></div>`;
+                mainContainer.innerHTML += html;
+            });
+        }
+
+        function renderizarFigura(figuraArray) {
+             const container = document.getElementById('figura-objetivo');
+             container.innerHTML = '';
+             for(let i=0; i<25; i++) {
+                 let div = document.createElement('div');
+                 div.className = 'celda-figura' + (figuraArray[i] ? ' activa' : '');
+                 container.appendChild(div);
+             }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            const salaQuery = urlParams.get('sala');
+            const cartonQuery = urlParams.get('carton');
+            const fbVideoQuery = urlParams.get('fbvideo'); // Leemos el video de FB si está en URL
+
+            const salaHash = window.location.hash.substring(1);
+            const codigoDetectado = salaQuery || salaHash;
+
+            if (codigoDetectado) document.getElementById('codigo-sala').value = codigoDetectado.toUpperCase();
+            if (cartonQuery) document.getElementById('numero-carton').value = cartonQuery;
+            
+            if (fbVideoQuery) {
+                window.fbVideoURL = fbVideoQuery; 
+                document.getElementById('url-fb').value = fbVideoQuery;
+            }
+
+            if (codigoDetectado && cartonQuery) document.getElementById('nombre-jugador').focus();
+        });
+
+        const salirDelJuego = () => {
+            if (miReferenciaDeJugador) {
+                deleteDoc(miReferenciaDeJugador);
+            }
+        };
+        window.addEventListener('beforeunload', salirDelJuego);
+        window.addEventListener('pagehide', salirDelJuego); 
+
+        window.desbloquearAudio = () => {
+            if ('speechSynthesis' in window) {
+                let mensajeMudo = new SpeechSynthesisUtterance("");
+                mensajeMudo.volume = 0; 
+                window.speechSynthesis.speak(mensajeMudo);
+
+                const btn = document.getElementById('btn-activar-audio');
+                btn.innerText = "✅ AUDIO ACTIVADO";
+                btn.style.backgroundColor = "#28a745"; 
+
+                setTimeout(() => {
+                    btn.style.display = 'none';
+                }, 2000);
+            } else {
+                alert("Tu navegador no soporta voces automáticas.");
+            }
+        };
+
+        window.cantarNumeroVoz = (numero) => {
+            if (!('speechSynthesis' in window)) return; 
+
+            let letra = '';
+            if (numero <= 15) letra = 'B';
+            else if (numero <= 30) letra = 'I';
+            else if (numero <= 45) letra = 'N';
+            else if (numero <= 60) letra = 'G';
+            else letra = 'O';
+
+            let textoHablar = `${letra}, ${numero}`;
+
+            let mensaje = new SpeechSynthesisUtterance(textoHablar);
+            mensaje.lang = 'es-ES'; 
+            mensaje.rate = 0.9;     
+            mensaje.pitch = 1;      
+
+            window.speechSynthesis.speak(mensaje);
+        };
+    </script>
+</body>
+</html>
